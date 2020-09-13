@@ -389,6 +389,21 @@ static void handle_config(const char *key, const char *value)
 
 static void init_mqttv4_config()
 {
+    // Setting conf vars to NULL
+    mqttv4_conf.mqtt_prefix=NULL;
+    mqttv4_conf.topic_birth_will=NULL;
+    mqttv4_conf.topic_motion=NULL;
+    mqttv4_conf.topic_motion_files=NULL;
+    mqttv4_conf.topic_baby_crying=NULL;
+    mqttv4_conf.topic_ai_human_detection=NULL;
+    mqttv4_conf.birth_msg=NULL;
+    mqttv4_conf.will_msg=NULL;
+    mqttv4_conf.ai_human_detection_start_msg=NULL;
+    mqttv4_conf.ai_human_detection_stop_msg=NULL;
+    mqttv4_conf.motion_start_msg=NULL;
+    mqttv4_conf.motion_stop_msg=NULL;
+    mqttv4_conf.baby_crying_msg=NULL;
+
     if(init_config(MQTTV4_CONF_FILE)!=0)
     {
         printf("Cannot open config file. Skipping.\n");
@@ -397,4 +412,91 @@ static void init_mqttv4_config()
 
     config_set_handler(&handle_config);
     config_parse();
+
+    // Setting default for all char* vars
+    if(conf.mqtt_prefix == NULL)
+    {
+        conf.mqtt_prefix=malloc((char)strlen("yicam")+1);
+        strcpy(conf.mqtt_prefix, "yicam");
+    }
+    if(mqttv4_conf.mqtt_prefix == NULL)
+    {
+        mqttv4_conf.mqtt_prefix=malloc((char)strlen("yicam")+1);
+        strcpy(mqttv4_conf.mqtt_prefix, "yicam");
+    }
+    if(conf.topic_birth_will == NULL)
+    {
+        conf.topic_birth_will=malloc((char)strlen("status")+1);
+        strcpy(conf.topic_birth_will, "status");
+    }
+    if(mqttv4_conf.topic_birth_will == NULL)
+    {
+        mqttv4_conf.topic_birth_will=malloc((char)strlen("status")+1);
+        strcpy(mqttv4_conf.topic_birth_will, "status");
+    }
+    if(mqttv4_conf.topic_ai_human_detection == NULL)
+    {
+        mqttv4_conf.topic_ai_human_detection=malloc((char)strlen("ai_human_detection")+1);
+        strcpy(mqttv4_conf.topic_ai_human_detection, "ai_human_detection");
+    }
+    if(mqttv4_conf.topic_motion == NULL)
+    {
+        mqttv4_conf.topic_motion=malloc((char)strlen("motion_detection")+1);
+        strcpy(mqttv4_conf.topic_motion, "motion_detection");
+    }
+    if(mqttv4_conf.topic_motion_files == NULL)
+    {
+        mqttv4_conf.topic_motion_files=malloc((char)strlen("motion_files")+1);
+        strcpy(mqttv4_conf.topic_motion_files, "motion_files");
+    }
+    if(mqttv4_conf.topic_baby_crying == NULL)
+    {
+        mqttv4_conf.topic_baby_crying=malloc((char)strlen("baby_crying")+1);
+        strcpy(mqttv4_conf.topic_baby_crying, "baby_crying");
+    }
+    if(conf.birth_msg == NULL)
+    {
+        conf.birth_msg=malloc((char)strlen("online")+1);
+        strcpy(conf.birth_msg, "online");
+    }
+    if(mqttv4_conf.birth_msg == NULL)
+    {
+        mqttv4_conf.birth_msg=malloc((char)strlen("online")+1);
+        strcpy(mqttv4_conf.birth_msg, "online");
+    }
+    if(conf.will_msg == NULL)
+    {
+        conf.will_msg=malloc((char)strlen("offline")+1);
+        strcpy(conf.will_msg, "offline");
+    }
+    if(mqttv4_conf.will_msg == NULL)
+    {
+        mqttv4_conf.will_msg=malloc((char)strlen("offline")+1);
+        strcpy(mqttv4_conf.will_msg, "offline");
+    }
+    if(mqttv4_conf.ai_human_detection_start_msg == NULL)
+    {
+        mqttv4_conf.ai_human_detection_start_msg=malloc((char)strlen("human_start")+1);
+        strcpy(mqttv4_conf.ai_human_detection_start_msg, "human_start");
+    }
+    if(mqttv4_conf.ai_human_detection_stop_msg == NULL)
+    {
+        mqttv4_conf.ai_human_detection_stop_msg=malloc((char)strlen("human_stop")+1);
+        strcpy(mqttv4_conf.ai_human_detection_stop_msg, "human_stop");
+    }
+    if(mqttv4_conf.motion_start_msg == NULL)
+    {
+        mqttv4_conf.motion_start_msg=malloc((char)strlen("motion_start")+1);
+        strcpy(mqttv4_conf.motion_start_msg, "motion_start");
+    }
+    if(mqttv4_conf.motion_stop_msg == NULL)
+    {
+        mqttv4_conf.motion_stop_msg=malloc((char)strlen("motion_stop")+1);
+        strcpy(mqttv4_conf.motion_stop_msg, "motion_stop");
+    }
+    if(mqttv4_conf.baby_crying_msg == NULL)
+    {
+        mqttv4_conf.baby_crying_msg=malloc((char)strlen("crying")+1);
+        strcpy(mqttv4_conf.baby_crying_msg, "crying");
+    }
 }
