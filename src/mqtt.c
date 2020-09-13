@@ -111,9 +111,12 @@ void mqtt_set_conf(mqtt_conf_t *conf)
 
 void mqtt_check_connection()
 {
+    char topic[128];
+
     if (!is_connected) {
-        mosquitto_will_set(mosq, mqtt_conf->topic_birth_will, strlen(mqtt_conf->will_msg),
-                    mqtt_conf->will_msg, mqtt_conf->qos, mqtt_conf->retain_birth_will);
+        sprintf(topic, "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
+        mosquitto_will_set(mosq, topic, strlen(mqtt_conf->will_msg),
+                    mqtt_conf->will_msg, mqtt_conf->qos, mqtt_conf->retain_birth_will == 1);
         mqtt_connect();
     }
 }
@@ -122,6 +125,7 @@ int mqtt_connect()
 {
     int ret;
     int retries=0;
+    char topic[128];
 
     printf("Trying to connect... ");
 
@@ -138,7 +142,8 @@ int mqtt_connect()
 
     retries=0;
 
-    ret=mosquitto_will_set(mosq, mqtt_conf->topic_birth_will, strlen(mqtt_conf->will_msg),
+    sprintf(topic, "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
+    mosquitto_will_set(mosq, topic, strlen(mqtt_conf->will_msg),
                 mqtt_conf->will_msg, mqtt_conf->qos, mqtt_conf->retain_birth_will == 1);
 
     do
