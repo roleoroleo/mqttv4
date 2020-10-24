@@ -17,11 +17,14 @@
 #define MQTTV4_VERSION      "0.0.3"
 #define MQTTV4_CONF_FILE    "/home/yi-hack-v4/etc/mqttv4.conf"
 
+#define MQTTV4_SNAPSHOT     "/home/yi-hack/bin/imggrabber -r high -w"
+
 typedef struct
 {
     char *mqtt_prefix;
     char *topic_birth_will;
     char *topic_motion;
+    char *topic_motion_image;
     char *topic_motion_files;
     char *topic_baby_crying;
     char *topic_ai_human_detection;

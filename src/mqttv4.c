@@ -104,6 +104,11 @@ void callback_ai_human_detection_stop()
 void callback_motion_start()
 {
     char topic[128];
+    char cmd[128];
+    char bufferFile[L_tmpnam];
+    FILE *fImage;
+    long int sz;
+    char *bufferImage;
     mqtt_msg_t msg;
     int ti;
 
@@ -115,6 +120,7 @@ void callback_motion_start()
         filesThread[ti].running = 1;
     }
 
+    // Send start message
     msg.msg=mqttv4_conf.motion_start_msg;
     msg.len=strlen(msg.msg);
     msg.topic=topic;
@@ -122,6 +128,49 @@ void callback_motion_start()
     sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
+
+    // Send image
+    tmpnam(bufferFile);
+    sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+    system(cmd);
+
+    fImage = fopen(bufferFile, "r");
+    if (fImage == NULL) {
+        printf("Cannot open image file\n");
+        remove(bufferFile);
+        return;
+    }
+    fseek(fImage, 0L, SEEK_END);
+    sz = ftell(fImage);
+    fseek(fImage, 0L, SEEK_SET);
+
+    bufferImage = (char *) malloc(sz * sizeof(char));
+    if (bufferImage == NULL) {
+        printf("Cannot allocate memory\n");
+        fclose(fImage);
+        remove(bufferFile);
+        return;
+    }
+    if (fread(bufferImage, 1, sz, fImage) != sz) {
+        printf("Cannot read image file\n");
+        free(bufferImage);
+        fclose(fImage);
+        remove(bufferFile);
+        return;
+    }
+
+    msg.msg=bufferImage;
+    msg.len=sz;
+    msg.topic=topic;
+
+    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+
+    mqtt_send_message(&msg, conf.retain_motion_image);
+
+    // Clean
+    free(bufferImage);
+    fclose(fImage);
+    remove(bufferFile);
 }
 
 void callback_motion_stop()
@@ -293,6 +342,13 @@ static void handle_config(const char *key, const char *value)
         if(errno==0)
             conf.retain_motion=nvalue;
     }
+    else if(strcmp(key, "MQTT_RETAIN_MOTION_IMAGE")==0)
+    {
+        errno=0;
+        nvalue=strtol(value, NULL, 10);
+        if(errno==0)
+            conf.retain_motion_image=nvalue;
+    }
     else if(strcmp(key, "MQTT_RETAIN_MOTION_FILES")==0)
     {
         errno=0;
@@ -330,6 +386,11 @@ static void handle_config(const char *key, const char *value)
     {
         mqttv4_conf.topic_motion=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.topic_motion, value);
+    }
+    else if(strcmp(key, "TOPIC_MOTION_IMAGE")==0)
+    {
+        mqttv4_conf.topic_motion_image=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.topic_motion_image, value);
     }
     else if(strcmp(key, "TOPIC_MOTION_FILES")==0)
     {
@@ -393,6 +454,7 @@ static void init_mqttv4_config()
     mqttv4_conf.mqtt_prefix=NULL;
     mqttv4_conf.topic_birth_will=NULL;
     mqttv4_conf.topic_motion=NULL;
+    mqttv4_conf.topic_motion_image=NULL;
     mqttv4_conf.topic_motion_files=NULL;
     mqttv4_conf.topic_baby_crying=NULL;
     mqttv4_conf.topic_ai_human_detection=NULL;
@@ -443,6 +505,11 @@ static void init_mqttv4_config()
     {
         mqttv4_conf.topic_motion=malloc((char)strlen("motion_detection")+1);
         strcpy(mqttv4_conf.topic_motion, "motion_detection");
+    }
+    if(mqttv4_conf.topic_motion_image == NULL)
+    {
+        mqttv4_conf.topic_motion_image=malloc((char)strlen("motion_detection_image")+1);
+        strcpy(mqttv4_conf.topic_motion_image, "motion_detection_image");
     }
     if(mqttv4_conf.topic_motion_files == NULL)
     {
