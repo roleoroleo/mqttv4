@@ -25,6 +25,7 @@ typedef struct
     int         retain_motion_image;
     int         retain_motion_files;
     int         retain_baby_crying;
+    int         retain_sound_detection;
 
     char       *mqtt_prefix;
     char       *topic_birth_will;

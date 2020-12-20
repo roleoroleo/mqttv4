@@ -98,6 +98,7 @@ void mqtt_init_conf(mqtt_conf_t *conf)
     conf->retain_motion_image=1;
     conf->retain_motion_files=1;
     conf->retain_baby_crying=1;
+    conf->retain_sound_detection=1;
 
     conf->mqtt_prefix=NULL;
     conf->topic_birth_will=NULL;

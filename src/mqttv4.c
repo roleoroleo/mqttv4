@@ -219,6 +219,22 @@ void callback_baby_crying()
     mqtt_send_message(&msg, conf.retain_baby_crying);
 }
 
+void callback_sound_detection()
+{
+    char topic[128];
+    mqtt_msg_t msg;
+
+    printf("CALLBACK SOUND DETECTION\n");
+
+    msg.msg=mqttv4_conf.sound_detection_msg;
+    msg.len=strlen(msg.msg);
+    msg.topic=topic;
+
+    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_sound_detection);
+
+    mqtt_send_message(&msg, conf.retain_sound_detection);
+}
+
 int main(int argc, char **argv)
 {
     int ret;
@@ -257,6 +273,7 @@ int main(int argc, char **argv)
     ipc_set_callback(IPC_MSG_MOTION_START, &callback_motion_start);
     ipc_set_callback(IPC_MSG_MOTION_STOP, &callback_motion_stop);
     ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
+    ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
 
     while(1)
     {
@@ -363,6 +380,13 @@ static void handle_config(const char *key, const char *value)
         if(errno==0)
             conf.retain_baby_crying=nvalue;
     }
+    else if(strcmp(key, "MQTT_RETAIN_SOUND_DETECTION")==0)
+    {
+        errno=0;
+        nvalue=strtol(value, NULL, 10);
+        if(errno==0)
+            conf.retain_sound_detection=nvalue;
+    }
     else if(strcmp(key, "MQTT_PREFIX")==0)
     {
         conf.mqtt_prefix=malloc((char)strlen(value)+1);
@@ -401,6 +425,11 @@ static void handle_config(const char *key, const char *value)
     {
         mqttv4_conf.topic_baby_crying=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.topic_baby_crying, value);
+    }
+    else if(strcmp(key, "TOPIC_SOUND_DETECTION")==0)
+    {
+        mqttv4_conf.topic_sound_detection=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.topic_sound_detection, value);
     }
     else if(strcmp(key, "BIRTH_MSG")==0)
     {
@@ -441,6 +470,11 @@ static void handle_config(const char *key, const char *value)
         mqttv4_conf.baby_crying_msg=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.baby_crying_msg, value);
     }
+    else if(strcmp(key, "SOUND_DETECTION_MSG")==0)
+    {
+        mqttv4_conf.sound_detection_msg=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.sound_detection_msg, value);
+    }
     else
     {
         printf("key: %s | value: %s\n", key, value);
@@ -457,6 +491,7 @@ static void init_mqttv4_config()
     mqttv4_conf.topic_motion_image=NULL;
     mqttv4_conf.topic_motion_files=NULL;
     mqttv4_conf.topic_baby_crying=NULL;
+    mqttv4_conf.topic_sound_detection=NULL;
     mqttv4_conf.topic_ai_human_detection=NULL;
     mqttv4_conf.birth_msg=NULL;
     mqttv4_conf.will_msg=NULL;
@@ -465,6 +500,7 @@ static void init_mqttv4_config()
     mqttv4_conf.motion_start_msg=NULL;
     mqttv4_conf.motion_stop_msg=NULL;
     mqttv4_conf.baby_crying_msg=NULL;
+    mqttv4_conf.sound_detection_msg=NULL;
 
     if(init_config(MQTTV4_CONF_FILE)!=0)
     {
@@ -521,6 +557,11 @@ static void init_mqttv4_config()
         mqttv4_conf.topic_baby_crying=malloc((char)strlen("baby_crying")+1);
         strcpy(mqttv4_conf.topic_baby_crying, "baby_crying");
     }
+    if(mqttv4_conf.topic_sound_detection == NULL)
+    {
+        mqttv4_conf.topic_sound_detection=malloc((char)strlen("sound_detection")+1);
+        strcpy(mqttv4_conf.topic_sound_detection, "sound_detection");
+    }
     if(conf.birth_msg == NULL)
     {
         conf.birth_msg=malloc((char)strlen("online")+1);
@@ -565,5 +606,10 @@ static void init_mqttv4_config()
     {
         mqttv4_conf.baby_crying_msg=malloc((char)strlen("crying")+1);
         strcpy(mqttv4_conf.baby_crying_msg, "crying");
+    }
+    if(mqttv4_conf.sound_detection_msg == NULL)
+    {
+        mqttv4_conf.sound_detection_msg=malloc((char)strlen("sound")+1);
+        strcpy(mqttv4_conf.sound_detection_msg, "sound");
     }
 }

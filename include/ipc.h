@@ -40,6 +40,7 @@
 #define IPC_MOTION_START                "\x4d\x4f\x54\x49\x4f\x4e\x5f\x53\x54\x41\x52\x54"
 #define IPC_MOTION_STOP                 "\x4d\x4f\x54\x49\x4f\x4e\x5f\x53\x54\x4f\x50"
 #define IPC_BABY_CRYING                 "\x42\x41\x42\x59\x5f\x43\x52\x59\x49\x4e\x47"
+#define IPC_SOUND_DETECTION             "\x53\x4f\x55\x4e\x44\x5f\x44\x45\x54\x45\x43\x54\x49\x4f\x4e"
 
 typedef enum
 {
@@ -49,6 +50,7 @@ typedef enum
     IPC_MSG_MOTION_START,
     IPC_MSG_MOTION_STOP,
     IPC_MSG_BABY_CRYING,
+    IPC_MSG_SOUND_DETECTION,
     IPC_MSG_LAST
 } IPC_MESSAGE_TYPE;
 
