@@ -524,43 +524,43 @@ static void init_mqttv4_config()
     }
     if(conf.topic_birth_will == NULL)
     {
-        conf.topic_birth_will=malloc((char)strlen("status")+1);
-        strcpy(conf.topic_birth_will, "status");
+        conf.topic_birth_will=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(conf.topic_birth_will, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_birth_will == NULL)
     {
-        mqttv4_conf.topic_birth_will=malloc((char)strlen("status")+1);
-        strcpy(mqttv4_conf.topic_birth_will, "status");
+        mqttv4_conf.topic_birth_will=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_birth_will, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_ai_human_detection == NULL)
     {
-        mqttv4_conf.topic_ai_human_detection=malloc((char)strlen("ai_human_detection")+1);
-        strcpy(mqttv4_conf.topic_ai_human_detection, "ai_human_detection");
+        mqttv4_conf.topic_ai_human_detection=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_ai_human_detection, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_motion == NULL)
     {
-        mqttv4_conf.topic_motion=malloc((char)strlen("motion_detection")+1);
-        strcpy(mqttv4_conf.topic_motion, "motion_detection");
+        mqttv4_conf.topic_motion=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_motion, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_motion_image == NULL)
     {
-        mqttv4_conf.topic_motion_image=malloc((char)strlen("motion_detection_image")+1);
-        strcpy(mqttv4_conf.topic_motion_image, "motion_detection_image");
+        mqttv4_conf.topic_motion_image=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_motion_image, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_motion_files == NULL)
     {
-        mqttv4_conf.topic_motion_files=malloc((char)strlen("motion_files")+1);
-        strcpy(mqttv4_conf.topic_motion_files, "motion_files");
+        mqttv4_conf.topic_motion_files=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_motion_files, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_baby_crying == NULL)
     {
-        mqttv4_conf.topic_baby_crying=malloc((char)strlen("baby_crying")+1);
-        strcpy(mqttv4_conf.topic_baby_crying, "baby_crying");
+        mqttv4_conf.topic_baby_crying=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_baby_crying, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_sound_detection == NULL)
     {
-        mqttv4_conf.topic_sound_detection=malloc((char)strlen("sound_detection")+1);
-        strcpy(mqttv4_conf.topic_sound_detection, "sound_detection");
+        mqttv4_conf.topic_sound_detection=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_sound_detection, EMPTY_TOPIC);
     }
     if(conf.birth_msg == NULL)
     {
