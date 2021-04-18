@@ -129,48 +129,50 @@ void callback_motion_start()
 
     mqtt_send_message(&msg, conf.retain_motion);
 
-    // Send image
-    tmpnam(bufferFile);
-    sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
-    system(cmd);
+    if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
+        // Send image
+        tmpnam(bufferFile);
+        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        system(cmd);
 
-    fImage = fopen(bufferFile, "r");
-    if (fImage == NULL) {
-        printf("Cannot open image file\n");
-        remove(bufferFile);
-        return;
-    }
-    fseek(fImage, 0L, SEEK_END);
-    sz = ftell(fImage);
-    fseek(fImage, 0L, SEEK_SET);
+        fImage = fopen(bufferFile, "r");
+        if (fImage == NULL) {
+            printf("Cannot open image file\n");
+            remove(bufferFile);
+            return;
+        }
+        fseek(fImage, 0L, SEEK_END);
+        sz = ftell(fImage);
+        fseek(fImage, 0L, SEEK_SET);
 
-    bufferImage = (char *) malloc(sz * sizeof(char));
-    if (bufferImage == NULL) {
-        printf("Cannot allocate memory\n");
-        fclose(fImage);
-        remove(bufferFile);
-        return;
-    }
-    if (fread(bufferImage, 1, sz, fImage) != sz) {
-        printf("Cannot read image file\n");
+        bufferImage = (char *) malloc(sz * sizeof(char));
+        if (bufferImage == NULL) {
+            printf("Cannot allocate memory\n");
+            fclose(fImage);
+            remove(bufferFile);
+            return;
+        }
+        if (fread(bufferImage, 1, sz, fImage) != sz) {
+            printf("Cannot read image file\n");
+            free(bufferImage);
+            fclose(fImage);
+            remove(bufferFile);
+            return;
+        }
+
+        msg.msg=bufferImage;
+        msg.len=sz;
+        msg.topic=topic;
+
+        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+
+        mqtt_send_message(&msg, conf.retain_motion_image);
+
+        // Clean
         free(bufferImage);
         fclose(fImage);
         remove(bufferFile);
-        return;
     }
-
-    msg.msg=bufferImage;
-    msg.len=sz;
-    msg.topic=topic;
-
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
-
-    mqtt_send_message(&msg, conf.retain_motion_image);
-
-    // Clean
-    free(bufferImage);
-    fclose(fImage);
-    remove(bufferFile);
 }
 
 void callback_motion_stop()
