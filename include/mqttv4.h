@@ -17,7 +17,7 @@
 #define MQTTV4_VERSION      "0.0.3"
 #define MQTTV4_CONF_FILE    "/home/yi-hack-v4/etc/mqttv4.conf"
 
-#define MQTTV4_SNAPSHOT     "/home/yi-hack/bin/imggrabber -r high -w"
+#define MQTTV4_SNAPSHOT     "export MOD=$(cat /home/yi-hack/model_suffix); /home/yi-hack/bin/imggrabber -m $MOD -r high -w"
 
 typedef struct
 {
