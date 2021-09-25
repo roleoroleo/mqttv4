@@ -43,6 +43,7 @@ static void handle_ipc_motion_stop();
 static void handle_ipc_ai_human_detection();
 static void handle_ipc_baby_crying();
 static void handle_ipc_sound_detection();
+static void handle_ipc_motion_jpg();
 
 static void handle_ipc_unrecognized();
 
@@ -212,6 +213,11 @@ static int parse_message(char *msg, ssize_t len)
         handle_ipc_sound_detection();
         return 0;
     }
+    else if((len >= sizeof(IPC_MOTION_JPG) - 1) && (memcmp(msg, IPC_MOTION_JPG, sizeof(IPC_MOTION_JPG) - 1)==0))
+    {
+        handle_ipc_motion_jpg();
+        return 0;
+    }
 
     handle_ipc_unrecognized();
 
@@ -256,6 +262,12 @@ static void handle_ipc_sound_detection()
 {
     ipc_debug("GOT SOUND DETECTION\n");
     call_callback(IPC_MSG_SOUND_DETECTION);
+}
+
+static void handle_ipc_motion_jpg()
+{
+    ipc_debug("GOT MOTION JPG\n");
+    call_callback(IPC_MSG_MOTION_JPG);
 }
 
 //-----------------------------------------------------------------------------

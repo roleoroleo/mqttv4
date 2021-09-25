@@ -40,6 +40,7 @@
 #define IPC_AI_HUMAN_DETECTION          "\x41\x49\x5F\x48\x55\x4D\x41\x4E\x5F\x44\x45\x54\x45\x43\x54\x49\x4F\x4E"
 #define IPC_BABY_CRYING                 "\x42\x41\x42\x59\x5f\x43\x52\x59\x49\x4e\x47"
 #define IPC_SOUND_DETECTION             "\x53\x4f\x55\x4e\x44\x5f\x44\x45\x54\x45\x43\x54\x49\x4f\x4e"
+#define IPC_MOTION_JPG                  "\x4D\x4F\x54\x49\x4F\x4E\x5F\x4A\x50\x47"
 
 typedef enum
 {
@@ -49,6 +50,7 @@ typedef enum
     IPC_MSG_AI_HUMAN_DETECTION,
     IPC_MSG_BABY_CRYING,
     IPC_MSG_SOUND_DETECTION,
+    IPC_MSG_MOTION_JPG,
     IPC_MSG_LAST
 } IPC_MESSAGE_TYPE;
 

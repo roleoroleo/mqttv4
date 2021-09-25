@@ -23,6 +23,7 @@ files_thread filesThread[2];
 
 int files_delay = 70;        // Wait for xx seconds before search for mp4 files
 int files_max_events = 50;   // Number of files reported in the message
+int ai_human_detection_sm = 0;
 
 int get_thread_index(int isRunning)
 {
@@ -164,29 +165,26 @@ void callback_motion_stop()
 
     ti = get_thread_index(1);
     if (ti >= 0 ) {
-        filesThread[ti].timeStop = tmpTimeStop;
+        if (filesThread[ti].timeStart != 0) {
+            filesThread[ti].timeStop = tmpTimeStop;
 
-        if (pthread_create(&filesThread[ti].thread, NULL, send_files_list, (void *) &filesThread[ti])) {
-            fprintf(stderr, "An error occured creating thread\n");
+            if (pthread_create(&filesThread[ti].thread, NULL, send_files_list, (void *) &filesThread[ti])) {
+                fprintf(stderr, "An error occured creating thread\n");
+            }
+            pthread_detach(filesThread[ti].thread);
+        } else {
+            filesThread[ti].timeStart = 0;
+            filesThread[ti].timeStop = 0;
+            filesThread[ti].running = 0;
         }
-        pthread_detach(filesThread[ti].thread);
     }
 }
 
 void callback_ai_human_detection()
 {
-    char topic[128];
-    mqtt_msg_t msg;
-
     printf("CALLBACK AI_HUMAN_DETECTION\n");
 
-    msg.msg=mqttv4_conf.ai_human_detection_msg;
-    msg.len=strlen(msg.msg);
-    msg.topic=topic;
-
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_ai_human_detection);
-
-    mqtt_send_message(&msg, conf.retain_ai_human_detection);
+    ai_human_detection_sm = 1;
 }
 
 void callback_baby_crying()
@@ -219,6 +217,28 @@ void callback_sound_detection()
     sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_sound_detection);
 
     mqtt_send_message(&msg, conf.retain_sound_detection);
+}
+
+void callback_motion_jpg()
+{
+    char topic[128];
+    mqtt_msg_t msg;
+
+    printf("CALLBACK MOTION JPG\n");
+
+    if (ai_human_detection_sm == 1) {
+        msg.msg=mqttv4_conf.ai_human_detection_msg;
+        msg.len=strlen(msg.msg);
+        msg.topic=topic;
+
+        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_ai_human_detection);
+
+        mqtt_send_message(&msg, conf.retain_ai_human_detection);
+    } else {
+        printf("motion_jpg message is detected but ai_human_detection message was not previously  detected\n");
+    }
+
+    ai_human_detection_sm = 0;
 }
 
 int main(int argc, char **argv)
@@ -259,6 +279,7 @@ int main(int argc, char **argv)
     ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION, &callback_ai_human_detection);
     ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
     ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
+    ipc_set_callback(IPC_MSG_MOTION_JPG, &callback_motion_jpg);
 
     while(1)
     {
