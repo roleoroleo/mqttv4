@@ -22,7 +22,6 @@ typedef struct
     char        bind_address[32];
     int         qos;
     int         retain_birth_will;
-    int         retain_ai_human_detection;
     int         retain_motion;
     int         retain_motion_image;
     int         retain_motion_files;

@@ -93,7 +93,6 @@ void mqtt_init_conf(mqtt_conf_t *conf)
     conf->keepalive=120;
     conf->qos=1;
     conf->retain_birth_will=1;
-    conf->retain_ai_human_detection=1;
     conf->retain_motion=1;
     conf->retain_motion_image=1;
     conf->retain_motion_files=1;
