@@ -99,8 +99,10 @@ void callback_motion_start()
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
         // Send image
+        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
         sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
         system(cmd);
 
         fImage = fopen(bufferFile, "r");
@@ -378,6 +380,10 @@ static void handle_config(const char *key, const char *value)
         mqttv4_conf.topic_motion_image=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.topic_motion_image, value);
     }
+    else if(strcmp(key, "MOTION_IMAGE_DELAY")==0)
+    {
+        mqttv4_conf.motion_image_delay=strtod(value, NULL);
+    }
     else if(strcmp(key, "TOPIC_MOTION_FILES")==0)
     {
         mqttv4_conf.topic_motion_files=malloc((char)strlen(value)+1);
@@ -430,7 +436,7 @@ static void handle_config(const char *key, const char *value)
     else
     {
         printf("key: %s | value: %s\n", key, value);
-        fprintf(stderr, "Unrecognized config.\n");
+        fprintf(stderr, "Unrecognized config line, ignore it\n");
     }
 }
 
@@ -441,6 +447,7 @@ static void init_mqttv4_config()
     mqttv4_conf.topic_birth_will=NULL;
     mqttv4_conf.topic_motion=NULL;
     mqttv4_conf.topic_motion_image=NULL;
+    mqttv4_conf.motion_image_delay=0.5;
     mqttv4_conf.topic_motion_files=NULL;
     mqttv4_conf.topic_baby_crying=NULL;
     mqttv4_conf.topic_sound_detection=NULL;
