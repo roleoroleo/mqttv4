@@ -181,6 +181,38 @@ void callback_motion_stop()
     }
 }
 
+void callback_ai_human_detection_start()
+{
+    char topic[128];
+    mqtt_msg_t msg;
+
+    printf("CALLBACK AI_HUMAN_DETECTION START\n");
+
+    msg.msg=mqttv4_conf.ai_human_detection_start_msg;
+    msg.len=strlen(msg.msg);
+    msg.topic=topic;
+
+    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_ai_human_detection);
+
+    mqtt_send_message(&msg, conf.retain_ai_human_detection);
+}
+
+void callback_ai_human_detection_stop()
+{
+    char topic[128];
+    mqtt_msg_t msg;
+
+    printf("CALLBACK AI_HUMAN_DETECTION STOP\n");
+
+    msg.msg=mqttv4_conf.ai_human_detection_stop_msg;
+    msg.len=strlen(msg.msg);
+    msg.topic=topic;
+
+    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_ai_human_detection);
+
+    mqtt_send_message(&msg, conf.retain_ai_human_detection);
+}
+
 void callback_baby_crying()
 {
     char topic[128];
@@ -248,6 +280,8 @@ int main(int argc, char **argv)
 
     ipc_set_callback(IPC_MSG_MOTION_START, &callback_motion_start);
     ipc_set_callback(IPC_MSG_MOTION_STOP, &callback_motion_stop);
+    ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION_START, &callback_ai_human_detection_start);
+    ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION_STOP, &callback_ai_human_detection_stop);
     ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
     ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
 
@@ -321,6 +355,13 @@ static void handle_config(const char *key, const char *value)
         if(errno==0)
             conf.retain_birth_will=nvalue;
     }
+    else if(strcmp(key, "MQTT_RETAIN_AI_HUMAN_DETECTION")==0)
+    {
+        errno=0;
+        nvalue=strtol(value, NULL, 10);
+        if(errno==0)
+            conf.retain_ai_human_detection=nvalue;
+    }
     else if(strcmp(key, "MQTT_RETAIN_MOTION")==0)
     {
         errno=0;
@@ -369,6 +410,11 @@ static void handle_config(const char *key, const char *value)
         strcpy(conf.topic_birth_will, value);
         mqttv4_conf.topic_birth_will=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.topic_birth_will, value);
+    }
+    else if(strcmp(key, "TOPIC_AI_HUMAN_DETECTION")==0)
+    {
+        mqttv4_conf.topic_ai_human_detection=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.topic_ai_human_detection, value);
     }
     else if(strcmp(key, "TOPIC_MOTION")==0)
     {
@@ -423,6 +469,16 @@ static void handle_config(const char *key, const char *value)
         mqttv4_conf.motion_stop_msg=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.motion_stop_msg, value);
     }
+    else if(strcmp(key, "AI_HUMAN_DETECTION_START_MSG")==0)
+    {
+        mqttv4_conf.ai_human_detection_start_msg=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.ai_human_detection_start_msg, value);
+    }
+    else if(strcmp(key, "AI_HUMAN_DETECTION_STOP_MSG")==0)
+    {
+        mqttv4_conf.ai_human_detection_stop_msg=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.ai_human_detection_stop_msg, value);
+    }
     else if(strcmp(key, "BABY_CRYING_MSG")==0)
     {
         mqttv4_conf.baby_crying_msg=malloc((char)strlen(value)+1);
@@ -451,10 +507,13 @@ static void init_mqttv4_config()
     mqttv4_conf.topic_motion_files=NULL;
     mqttv4_conf.topic_baby_crying=NULL;
     mqttv4_conf.topic_sound_detection=NULL;
+    mqttv4_conf.topic_ai_human_detection=NULL;
     mqttv4_conf.birth_msg=NULL;
     mqttv4_conf.will_msg=NULL;
     mqttv4_conf.motion_start_msg=NULL;
     mqttv4_conf.motion_stop_msg=NULL;
+    mqttv4_conf.ai_human_detection_start_msg=NULL;
+    mqttv4_conf.ai_human_detection_stop_msg=NULL;
     mqttv4_conf.baby_crying_msg=NULL;
     mqttv4_conf.sound_detection_msg=NULL;
 
@@ -487,6 +546,11 @@ static void init_mqttv4_config()
     {
         mqttv4_conf.topic_birth_will=malloc((char)strlen(EMPTY_TOPIC)+1);
         strcpy(mqttv4_conf.topic_birth_will, EMPTY_TOPIC);
+    }
+    if(mqttv4_conf.topic_ai_human_detection == NULL)
+    {
+        mqttv4_conf.topic_ai_human_detection=malloc((char)strlen(EMPTY_TOPIC)+1);
+        strcpy(mqttv4_conf.topic_ai_human_detection, EMPTY_TOPIC);
     }
     if(mqttv4_conf.topic_motion == NULL)
     {
@@ -542,6 +606,16 @@ static void init_mqttv4_config()
     {
         mqttv4_conf.motion_stop_msg=malloc((char)strlen("motion_stop")+1);
         strcpy(mqttv4_conf.motion_stop_msg, "motion_stop");
+    }
+    if(mqttv4_conf.ai_human_detection_start_msg == NULL)
+    {
+        mqttv4_conf.ai_human_detection_start_msg=malloc((char)strlen("human_start")+1);
+        strcpy(mqttv4_conf.ai_human_detection_start_msg, "human_start");
+    }
+    if(mqttv4_conf.ai_human_detection_stop_msg == NULL)
+    {
+        mqttv4_conf.ai_human_detection_stop_msg=malloc((char)strlen("human_stop")+1);
+        strcpy(mqttv4_conf.ai_human_detection_stop_msg, "human_stop");
     }
     if(mqttv4_conf.baby_crying_msg == NULL)
     {

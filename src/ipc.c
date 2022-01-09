@@ -40,6 +40,8 @@ static void ipc_debug(const char* fmt, ...);
 
 static void handle_ipc_motion_start();
 static void handle_ipc_motion_stop();
+static void handle_ipc_ai_human_detection_start();
+static void handle_ipc_ai_human_detection_stop();
 static void handle_ipc_baby_crying();
 static void handle_ipc_sound_detection();
 
@@ -196,6 +198,16 @@ static int parse_message(char *msg, ssize_t len)
         handle_ipc_motion_stop();
         return 0;
     }
+    else if((len >= sizeof(IPC_AI_HUMAN_DETECTION_START) - 1) && (memcmp(msg, IPC_AI_HUMAN_DETECTION_START, sizeof(IPC_AI_HUMAN_DETECTION_START) - 1)==0))
+    {
+        handle_ipc_ai_human_detection_start();
+        return 0;
+    }
+    else if((len >= sizeof(IPC_AI_HUMAN_DETECTION_STOP) - 1) && (memcmp(msg, IPC_AI_HUMAN_DETECTION_STOP, sizeof(IPC_AI_HUMAN_DETECTION_STOP) - 1)==0))
+    {
+        handle_ipc_ai_human_detection_stop();
+        return 0;
+    }
     else if((len >= sizeof(IPC_BABY_CRYING) - 1) && (memcmp(msg, IPC_BABY_CRYING, sizeof(IPC_BABY_CRYING) - 1)==0))
     {
         handle_ipc_baby_crying();
@@ -232,6 +244,18 @@ static void handle_ipc_motion_stop()
 {
     ipc_debug("GOT MOTION STOP\n");
     call_callback(IPC_MSG_MOTION_STOP);
+}
+
+static void handle_ipc_ai_human_detection_start()
+{
+    ipc_debug("GOT AI_HUMAN_DETECTION START\n");
+    call_callback(IPC_MSG_AI_HUMAN_DETECTION_START);
+}
+
+static void handle_ipc_ai_human_detection_stop()
+{
+    ipc_debug("GOT AI_HUMAN_DETECTION STOP\n");
+    call_callback(IPC_MSG_AI_HUMAN_DETECTION_STOP);
 }
 
 static void handle_ipc_baby_crying()
