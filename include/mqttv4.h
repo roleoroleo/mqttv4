@@ -19,6 +19,10 @@
 
 #define MQTTV4_SNAPSHOT     "export MOD=$(cat /home/yi-hack/model_suffix); /home/yi-hack/bin/imggrabber -m $MOD -r high -w"
 
+#define TH_AVAILABLE 0
+#define TH_WAITING   1
+#define TH_RUNNING   2
+
 typedef struct
 {
     char *mqtt_prefix;

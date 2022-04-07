@@ -19,24 +19,21 @@ mqttv4_conf_t mqttv4_conf;
 static void init_mqttv4_config();
 static void handle_config(const char *key, const char *value);
 
-files_thread filesThread[2];
+files_thread filesThread[3];
 
 int files_delay = 70;        // Wait for xx seconds before search for mp4 files
 int files_max_events = 50;   // Number of files reported in the message
 
-int get_thread_index(int isRunning)
+int get_thread_index(int state)
 {
-    int i = -1;
-    int ret;
+    int i;
+    int ret = -1;
     time_t tmpTimeStart;
 
     time(&tmpTimeStart);
-    for (i = 0; i < 2; i++) {
-        if ((isRunning == 1) && (filesThread[i].running == 0)) continue;
-        if (filesThread[i].timeStart < tmpTimeStart) {
-            tmpTimeStart = filesThread[i].timeStart;
-            ret = i;
-        }
+    for (i = 0; i < 3; i++) {
+        if (state == filesThread[i].running)
+            return i;
     }
 
     return ret;
@@ -64,8 +61,9 @@ void *send_files_list(void *arg)
     }
     ft->timeStart = 0;
     ft->timeStop = 0;
-    ft->running = 0;
+    ft->running = TH_AVAILABLE;
 
+    printf("Thread exiting\n");
     pthread_exit(NULL);
 }
 
@@ -82,10 +80,11 @@ void callback_motion_start()
 
     printf("CALLBACK MOTION START\n");
 
-    ti = get_thread_index(0);
+    ti = get_thread_index(TH_AVAILABLE);
+    printf("Thread %d available\n", ti);
     if (ti >= 0 ) {
         time(&filesThread[ti].timeStart);
-        filesThread[ti].running = 1;
+        filesThread[ti].running = TH_WAITING;
     }
 
     // Send start message
@@ -164,19 +163,25 @@ void callback_motion_stop()
 
     mqtt_send_message(&msg, conf.retain_motion);
 
-    ti = get_thread_index(1);
+    ti = get_thread_index(TH_WAITING);
+    printf("Thread %d waiting\n", ti);
     if (ti >= 0 ) {
         if (filesThread[ti].timeStart != 0) {
             filesThread[ti].timeStop = tmpTimeStop;
+            filesThread[ti].running = TH_RUNNING;
 
+            printf("Thread %d starting\n", ti);
             if (pthread_create(&filesThread[ti].thread, NULL, send_files_list, (void *) &filesThread[ti])) {
+                filesThread[ti].timeStart = 0;
+                filesThread[ti].timeStop = 0;
+                filesThread[ti].running = TH_AVAILABLE;
                 fprintf(stderr, "An error occured creating thread\n");
             }
             pthread_detach(filesThread[ti].thread);
         } else {
             filesThread[ti].timeStart = 0;
             filesThread[ti].timeStop = 0;
-            filesThread[ti].running = 0;
+            filesThread[ti].running = TH_AVAILABLE;
         }
     }
 }
@@ -255,12 +260,15 @@ int main(int argc, char **argv)
     printf("Starting mqttv4 v%s\n", MQTTV4_VERSION);
 
     // Init threads struct
-    filesThread[0].running = 0;
-    filesThread[1].running = 0;
+    filesThread[0].running = TH_AVAILABLE;
+    filesThread[1].running = TH_AVAILABLE;
+    filesThread[2].running = TH_AVAILABLE;
     filesThread[0].timeStart = 0;
     filesThread[1].timeStart = 0;
+    filesThread[2].timeStart = 0;
     filesThread[0].timeStop = 0;
     filesThread[1].timeStop = 0;
+    filesThread[2].timeStop = 0;
 
     mqtt_init_conf(&conf);
     init_mqttv4_config();
