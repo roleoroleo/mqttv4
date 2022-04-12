@@ -64,8 +64,8 @@ int getMp4Files(char *output, int limit, time_t startTime, time_t endTime)
     sprintf(output + strlen(output), "\"%s%c%c%c:%c%c\",\n\"end\":", s8601date,
             s8601date_z[0], s8601date_z[1], s8601date_z[2], s8601date_z[3], s8601date_z[4]);
 
-    // Use localtime to print "end"
-    timeinfo=localtime(&endTime);
+    // Use gmt time to print "end"
+    timeinfo=gmtime(&endTime);
     if (strftime(s8601date, sizeof(s8601date), "%FT%T", timeinfo) == 0) {
         fprintf(stderr, "strftime returned 0");
         return -1;
@@ -77,8 +77,8 @@ int getMp4Files(char *output, int limit, time_t startTime, time_t endTime)
     sprintf(output + strlen(output), "\"%s%c%c%c:%c%c\",\n\"files\":[ ", s8601date,
             s8601date_z[0], s8601date_z[1], s8601date_z[2], s8601date_z[3], s8601date_z[4]);
 
-    // Use GMT time to read record directories
-    timeinfo=gmtime(&endTime);
+    // Use localtime to read record directories
+    timeinfo=localtime(&endTime);
     sprintf(sDir, "%dY%02dM%02dD%02dH", timeinfo->tm_year + 1900,
         timeinfo->tm_mon + 1, timeinfo->tm_mday, timeinfo->tm_hour);
     sprintf(sFile, "%02dM", timeinfo->tm_min);
@@ -90,9 +90,9 @@ int getMp4Files(char *output, int limit, time_t startTime, time_t endTime)
         num++;
         if (num >= limit) break;
 
-        rawtime=mktime(timeinfo);
+        rawtime=timelocal(timeinfo);
         rawtime-=60;
-        timeinfo=gmtime(&rawtime);
+        timeinfo=localtime(&rawtime);
 
         if (rawtime < (startTime - 60)) break;
 
