@@ -64,8 +64,8 @@ int getMp4Files(char *output, int limit, time_t startTime, time_t endTime)
     sprintf(output + strlen(output), "\"%s%c%c%c:%c%c\",\n\"end\":", s8601date,
             s8601date_z[0], s8601date_z[1], s8601date_z[2], s8601date_z[3], s8601date_z[4]);
 
-    // Use gmt time to print "end"
-    timeinfo=gmtime(&endTime);
+    // Use localtime to print "end"
+    timeinfo=localtime(&endTime);
     if (strftime(s8601date, sizeof(s8601date), "%FT%T", timeinfo) == 0) {
         fprintf(stderr, "strftime returned 0");
         return -1;
