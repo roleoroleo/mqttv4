@@ -20,12 +20,24 @@ int findFile(char *dirname, char *dir, char *filestart)
                 strcmp("..", entry->d_name) == 0)
                 continue;
         } else {
-            if (strncmp(entry->d_name, filestart, strlen(filestart)) == 0) {
-                strcpy(dirname, entry->d_name);
-                chdir("..");
-                closedir(dp);
+            if ((strlen(entry->d_name) >= 4) && (strcmp(&(entry->d_name[strlen(entry->d_name) - 4]), ".mp4") == 0)) {
+                if (strlen(entry->d_name) == 14) {
+                    if (strncmp(&(entry->d_name[2]), filestart, strlen(filestart)) == 0) {
+                        strcpy(dirname, entry->d_name);
+                        chdir("..");
+                        closedir(dp);
 
-                return 0;
+                        return 0;
+                    }
+                } else {
+                    if (strncmp(entry->d_name, filestart, strlen(filestart)) == 0) {
+                        strcpy(dirname, entry->d_name);
+                        chdir("..");
+                        closedir(dp);
+
+                        return 0;
+                    }
+                }
             }
         }
     }
