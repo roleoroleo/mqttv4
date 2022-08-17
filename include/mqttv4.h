@@ -31,15 +31,12 @@ typedef struct
     char *topic_motion_image;
     double motion_image_delay;
     char *topic_motion_files;
-    char *topic_baby_crying;
     char *topic_sound_detection;
-    char *topic_ai_human_detection;
     char *birth_msg;
     char *will_msg;
     char *motion_start_msg;
     char *motion_stop_msg;
-    char *ai_human_detection_start_msg;
-    char *ai_human_detection_stop_msg;
+    char *ai_human_detection_msg;
     char *baby_crying_msg;
     char *sound_detection_msg;
 } mqttv4_conf_t;
