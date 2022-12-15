@@ -393,6 +393,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
 
     ipc_set_callback(IPC_MSG_MOTION_START, &callback_motion_start);
+    ipc_set_callback(IPC_MSG_MOTION_START_2, &callback_motion_start);
     ipc_set_callback(IPC_MSG_MOTION_STOP, &callback_motion_stop);
     ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION, &callback_ai_human_detection);
     ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
