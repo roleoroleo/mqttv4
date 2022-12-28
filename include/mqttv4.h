@@ -37,6 +37,8 @@ typedef struct
     char *motion_start_msg;
     char *motion_stop_msg;
     char *ai_human_detection_msg;
+    char *ai_vehicle_detection_msg;
+    char *ai_animal_detection_msg;
     char *baby_crying_msg;
     char *sound_detection_msg;
 } mqttv4_conf_t;

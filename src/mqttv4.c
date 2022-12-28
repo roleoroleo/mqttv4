@@ -263,6 +263,160 @@ void callback_ai_human_detection()
     }
 }
 
+void callback_ai_vehicle_detection()
+{
+    char topic[128];
+    char cmd[128];
+    char bufferFile[L_tmpnam];
+    FILE *fImage;
+    long int sz;
+    char *bufferImage;
+    mqtt_msg_t msg;
+    int ti;
+
+    printf("CALLBACK AI_VEHICLE_DETECTION\n");
+
+    ti = get_thread_index(TH_AVAILABLE);
+    printf("Thread %d available\n", ti);
+    if (ti >= 0 ) {
+        time(&filesThread[ti].timeStart);
+        filesThread[ti].running = TH_WAITING;
+    }
+
+    // Send start message
+    msg.msg=mqttv4_conf.ai_vehicle_detection_msg;
+    msg.len=strlen(msg.msg);
+    msg.topic=topic;
+
+    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+
+    mqtt_send_message(&msg, conf.retain_motion);
+
+    if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
+        // Send image
+        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        tmpnam(bufferFile);
+        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
+        system(cmd);
+
+        fImage = fopen(bufferFile, "r");
+        if (fImage == NULL) {
+            printf("Cannot open image file\n");
+            remove(bufferFile);
+            return;
+        }
+        fseek(fImage, 0L, SEEK_END);
+        sz = ftell(fImage);
+        fseek(fImage, 0L, SEEK_SET);
+
+        bufferImage = (char *) malloc(sz * sizeof(char));
+        if (bufferImage == NULL) {
+            printf("Cannot allocate memory\n");
+            fclose(fImage);
+            remove(bufferFile);
+            return;
+        }
+        if (fread(bufferImage, 1, sz, fImage) != sz) {
+            printf("Cannot read image file\n");
+            free(bufferImage);
+            fclose(fImage);
+            remove(bufferFile);
+            return;
+        }
+
+        msg.msg=bufferImage;
+        msg.len=sz;
+        msg.topic=topic;
+
+        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+
+        mqtt_send_message(&msg, conf.retain_motion_image);
+
+        // Clean
+        free(bufferImage);
+        fclose(fImage);
+        remove(bufferFile);
+    }
+}
+
+void callback_ai_animal_detection()
+{
+    char topic[128];
+    char cmd[128];
+    char bufferFile[L_tmpnam];
+    FILE *fImage;
+    long int sz;
+    char *bufferImage;
+    mqtt_msg_t msg;
+    int ti;
+
+    printf("CALLBACK AI_ANIMAL_DETECTION\n");
+
+    ti = get_thread_index(TH_AVAILABLE);
+    printf("Thread %d available\n", ti);
+    if (ti >= 0 ) {
+        time(&filesThread[ti].timeStart);
+        filesThread[ti].running = TH_WAITING;
+    }
+
+    // Send start message
+    msg.msg=mqttv4_conf.ai_animal_detection_msg;
+    msg.len=strlen(msg.msg);
+    msg.topic=topic;
+
+    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+
+    mqtt_send_message(&msg, conf.retain_motion);
+
+    if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
+        // Send image
+        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        tmpnam(bufferFile);
+        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
+        system(cmd);
+
+        fImage = fopen(bufferFile, "r");
+        if (fImage == NULL) {
+            printf("Cannot open image file\n");
+            remove(bufferFile);
+            return;
+        }
+        fseek(fImage, 0L, SEEK_END);
+        sz = ftell(fImage);
+        fseek(fImage, 0L, SEEK_SET);
+
+        bufferImage = (char *) malloc(sz * sizeof(char));
+        if (bufferImage == NULL) {
+            printf("Cannot allocate memory\n");
+            fclose(fImage);
+            remove(bufferFile);
+            return;
+        }
+        if (fread(bufferImage, 1, sz, fImage) != sz) {
+            printf("Cannot read image file\n");
+            free(bufferImage);
+            fclose(fImage);
+            remove(bufferFile);
+            return;
+        }
+
+        msg.msg=bufferImage;
+        msg.len=sz;
+        msg.topic=topic;
+
+        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+
+        mqtt_send_message(&msg, conf.retain_motion_image);
+
+        // Clean
+        free(bufferImage);
+        fclose(fImage);
+        remove(bufferFile);
+    }
+}
+
 void callback_baby_crying()
 {
     char topic[128];
@@ -393,9 +547,10 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
 
     ipc_set_callback(IPC_MSG_MOTION_START, &callback_motion_start);
-    ipc_set_callback(IPC_MSG_MOTION_START_2, &callback_motion_start);
     ipc_set_callback(IPC_MSG_MOTION_STOP, &callback_motion_stop);
     ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION, &callback_ai_human_detection);
+    ipc_set_callback(IPC_MSG_AI_VEHICLE_DETECTION, &callback_ai_vehicle_detection);
+    ipc_set_callback(IPC_MSG_AI_ANIMAL_DETECTION, &callback_ai_animal_detection);
     ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
     ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
 
@@ -564,6 +719,16 @@ static void handle_config(const char *key, const char *value)
         mqttv4_conf.ai_human_detection_msg=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.ai_human_detection_msg, value);
     }
+    else if(strcmp(key, "AI_VEHICLE_DETECTION_MSG")==0)
+    {
+        mqttv4_conf.ai_vehicle_detection_msg=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.ai_vehicle_detection_msg, value);
+    }
+    else if(strcmp(key, "AI_ANIMAL_DETECTION_MSG")==0)
+    {
+        mqttv4_conf.ai_animal_detection_msg=malloc((char)strlen(value)+1);
+        strcpy(mqttv4_conf.ai_animal_detection_msg, value);
+    }
     else if(strcmp(key, "BABY_CRYING_MSG")==0)
     {
         mqttv4_conf.baby_crying_msg=malloc((char)strlen(value)+1);
@@ -596,6 +761,8 @@ static void init_mqttv4_config()
     mqttv4_conf.motion_start_msg=NULL;
     mqttv4_conf.motion_stop_msg=NULL;
     mqttv4_conf.ai_human_detection_msg=NULL;
+    mqttv4_conf.ai_vehicle_detection_msg=NULL;
+    mqttv4_conf.ai_animal_detection_msg=NULL;
     mqttv4_conf.baby_crying_msg=NULL;
     mqttv4_conf.sound_detection_msg=NULL;
 
@@ -683,6 +850,16 @@ static void init_mqttv4_config()
     {
         mqttv4_conf.ai_human_detection_msg=malloc((char)strlen("human")+1);
         strcpy(mqttv4_conf.ai_human_detection_msg, "human");
+    }
+    if(mqttv4_conf.ai_vehicle_detection_msg == NULL)
+    {
+        mqttv4_conf.ai_vehicle_detection_msg=malloc((char)strlen("vehicle")+1);
+        strcpy(mqttv4_conf.ai_vehicle_detection_msg, "vehicle");
+    }
+    if(mqttv4_conf.ai_animal_detection_msg == NULL)
+    {
+        mqttv4_conf.ai_animal_detection_msg=malloc((char)strlen("animal")+1);
+        strcpy(mqttv4_conf.ai_animal_detection_msg, "animal");
     }
     if(mqttv4_conf.baby_crying_msg == NULL)
     {
