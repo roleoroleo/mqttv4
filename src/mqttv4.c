@@ -24,6 +24,8 @@ files_thread filesThread[3];
 int files_delay = 70;        // Wait for xx seconds before search for mp4 files
 int files_max_events = 50;   // Number of files reported in the message
 
+extern char *ipc_cmd_params[][2];
+
 int get_thread_index(int state)
 {
     int i;
@@ -47,7 +49,7 @@ void *send_files_list(void *arg)
 
     sleep(files_delay);
 
-    printf("SENDING FILES LIST\n");
+    fprintf(stderr, "SENDING FILES LIST\n");
 
     memset(ft->output, '\0', sizeof(ft->output));
     if (getMp4Files(ft->output, files_max_events, ft->timeStart, ft->timeStop) == 0) {
@@ -63,11 +65,11 @@ void *send_files_list(void *arg)
     ft->timeStop = 0;
     ft->running = TH_AVAILABLE;
 
-    printf("Thread exiting\n");
+    fprintf(stderr, "Thread exiting\n");
     pthread_exit(NULL);
 }
 
-void callback_motion_start()
+void callback_motion_start(void *arg)
 {
     char topic[128];
     char cmd[128];
@@ -78,10 +80,10 @@ void callback_motion_start()
     mqtt_msg_t msg;
     int ti;
 
-    printf("CALLBACK MOTION START\n");
+    fprintf(stderr, "CALLBACK MOTION START\n");
 
     ti = get_thread_index(TH_AVAILABLE);
-    printf("Thread %d available\n", ti);
+    fprintf(stderr, "Thread %d available\n", ti);
     if (ti >= 0 ) {
         time(&filesThread[ti].timeStart);
         filesThread[ti].running = TH_WAITING;
@@ -98,7 +100,7 @@ void callback_motion_start()
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
         // Send image
-        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
         sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
@@ -106,7 +108,7 @@ void callback_motion_start()
 
         fImage = fopen(bufferFile, "r");
         if (fImage == NULL) {
-            printf("Cannot open image file\n");
+            fprintf(stderr, "Cannot open image file\n");
             remove(bufferFile);
             return;
         }
@@ -116,13 +118,13 @@ void callback_motion_start()
 
         bufferImage = (char *) malloc(sz * sizeof(char));
         if (bufferImage == NULL) {
-            printf("Cannot allocate memory\n");
+            fprintf(stderr, "Cannot allocate memory\n");
             fclose(fImage);
             remove(bufferFile);
             return;
         }
         if (fread(bufferImage, 1, sz, fImage) != sz) {
-            printf("Cannot read image file\n");
+            fprintf(stderr, "Cannot read image file\n");
             free(bufferImage);
             fclose(fImage);
             remove(bufferFile);
@@ -144,14 +146,14 @@ void callback_motion_start()
     }
 }
 
-void callback_motion_stop()
+void callback_motion_stop(void *arg)
 {
     char topic[128];
     mqtt_msg_t msg;
     int ti;
     time_t tmpTimeStop;
 
-    printf("CALLBACK MOTION STOP\n");
+    fprintf(stderr, "CALLBACK MOTION STOP\n");
 
     time(&tmpTimeStop);
 
@@ -164,13 +166,13 @@ void callback_motion_stop()
     mqtt_send_message(&msg, conf.retain_motion);
 
     ti = get_thread_index(TH_WAITING);
-    printf("Thread %d waiting\n", ti);
+    fprintf(stderr, "Thread %d waiting\n", ti);
     if (ti >= 0 ) {
         if (filesThread[ti].timeStart != 0) {
             filesThread[ti].timeStop = tmpTimeStop;
             filesThread[ti].running = TH_RUNNING;
 
-            printf("Thread %d starting\n", ti);
+            fprintf(stderr, "Thread %d starting\n", ti);
             if (pthread_create(&filesThread[ti].thread, NULL, send_files_list, (void *) &filesThread[ti])) {
                 filesThread[ti].timeStart = 0;
                 filesThread[ti].timeStop = 0;
@@ -186,7 +188,7 @@ void callback_motion_stop()
     }
 }
 
-void callback_ai_human_detection()
+void callback_ai_human_detection(void *arg)
 {
     char topic[128];
     char cmd[128];
@@ -197,10 +199,10 @@ void callback_ai_human_detection()
     mqtt_msg_t msg;
     int ti;
 
-    printf("CALLBACK AI_HUMAN_DETECTION\n");
+    fprintf(stderr, "CALLBACK AI_HUMAN_DETECTION\n");
 
     ti = get_thread_index(TH_AVAILABLE);
-    printf("Thread %d available\n", ti);
+    fprintf(stderr, "Thread %d available\n", ti);
     if (ti >= 0 ) {
         time(&filesThread[ti].timeStart);
         filesThread[ti].running = TH_WAITING;
@@ -217,7 +219,7 @@ void callback_ai_human_detection()
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
         // Send image
-        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
         sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
@@ -225,7 +227,7 @@ void callback_ai_human_detection()
 
         fImage = fopen(bufferFile, "r");
         if (fImage == NULL) {
-            printf("Cannot open image file\n");
+            fprintf(stderr, "Cannot open image file\n");
             remove(bufferFile);
             return;
         }
@@ -235,13 +237,13 @@ void callback_ai_human_detection()
 
         bufferImage = (char *) malloc(sz * sizeof(char));
         if (bufferImage == NULL) {
-            printf("Cannot allocate memory\n");
+            fprintf(stderr, "Cannot allocate memory\n");
             fclose(fImage);
             remove(bufferFile);
             return;
         }
         if (fread(bufferImage, 1, sz, fImage) != sz) {
-            printf("Cannot read image file\n");
+            fprintf(stderr, "Cannot read image file\n");
             free(bufferImage);
             fclose(fImage);
             remove(bufferFile);
@@ -263,7 +265,7 @@ void callback_ai_human_detection()
     }
 }
 
-void callback_ai_vehicle_detection()
+void callback_ai_vehicle_detection(void *arg)
 {
     char topic[128];
     char cmd[128];
@@ -274,10 +276,10 @@ void callback_ai_vehicle_detection()
     mqtt_msg_t msg;
     int ti;
 
-    printf("CALLBACK AI_VEHICLE_DETECTION\n");
+    fprintf(stderr, "CALLBACK AI_VEHICLE_DETECTION\n");
 
     ti = get_thread_index(TH_AVAILABLE);
-    printf("Thread %d available\n", ti);
+    fprintf(stderr, "Thread %d available\n", ti);
     if (ti >= 0 ) {
         time(&filesThread[ti].timeStart);
         filesThread[ti].running = TH_WAITING;
@@ -294,7 +296,7 @@ void callback_ai_vehicle_detection()
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
         // Send image
-        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
         sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
@@ -302,7 +304,7 @@ void callback_ai_vehicle_detection()
 
         fImage = fopen(bufferFile, "r");
         if (fImage == NULL) {
-            printf("Cannot open image file\n");
+            fprintf(stderr, "Cannot open image file\n");
             remove(bufferFile);
             return;
         }
@@ -312,13 +314,13 @@ void callback_ai_vehicle_detection()
 
         bufferImage = (char *) malloc(sz * sizeof(char));
         if (bufferImage == NULL) {
-            printf("Cannot allocate memory\n");
+            fprintf(stderr, "Cannot allocate memory\n");
             fclose(fImage);
             remove(bufferFile);
             return;
         }
         if (fread(bufferImage, 1, sz, fImage) != sz) {
-            printf("Cannot read image file\n");
+            fprintf(stderr, "Cannot read image file\n");
             free(bufferImage);
             fclose(fImage);
             remove(bufferFile);
@@ -340,7 +342,7 @@ void callback_ai_vehicle_detection()
     }
 }
 
-void callback_ai_animal_detection()
+void callback_ai_animal_detection(void *arg)
 {
     char topic[128];
     char cmd[128];
@@ -351,10 +353,10 @@ void callback_ai_animal_detection()
     mqtt_msg_t msg;
     int ti;
 
-    printf("CALLBACK AI_ANIMAL_DETECTION\n");
+    fprintf(stderr, "CALLBACK AI_ANIMAL_DETECTION\n");
 
     ti = get_thread_index(TH_AVAILABLE);
-    printf("Thread %d available\n", ti);
+    fprintf(stderr, "Thread %d available\n", ti);
     if (ti >= 0 ) {
         time(&filesThread[ti].timeStart);
         filesThread[ti].running = TH_WAITING;
@@ -371,7 +373,7 @@ void callback_ai_animal_detection()
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
         // Send image
-        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
         sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
@@ -379,7 +381,7 @@ void callback_ai_animal_detection()
 
         fImage = fopen(bufferFile, "r");
         if (fImage == NULL) {
-            printf("Cannot open image file\n");
+            fprintf(stderr, "Cannot open image file\n");
             remove(bufferFile);
             return;
         }
@@ -389,13 +391,13 @@ void callback_ai_animal_detection()
 
         bufferImage = (char *) malloc(sz * sizeof(char));
         if (bufferImage == NULL) {
-            printf("Cannot allocate memory\n");
+            fprintf(stderr, "Cannot allocate memory\n");
             fclose(fImage);
             remove(bufferFile);
             return;
         }
         if (fread(bufferImage, 1, sz, fImage) != sz) {
-            printf("Cannot read image file\n");
+            fprintf(stderr, "Cannot read image file\n");
             free(bufferImage);
             fclose(fImage);
             remove(bufferFile);
@@ -417,7 +419,7 @@ void callback_ai_animal_detection()
     }
 }
 
-void callback_baby_crying()
+void callback_baby_crying(void *arg)
 {
     char topic[128];
     char cmd[128];
@@ -428,10 +430,10 @@ void callback_baby_crying()
     mqtt_msg_t msg;
     int ti;
 
-    printf("CALLBACK BABY CRYING\n");
+    fprintf(stderr, "CALLBACK BABY CRYING\n");
 
     ti = get_thread_index(TH_AVAILABLE);
-    printf("Thread %d available\n", ti);
+    fprintf(stderr, "Thread %d available\n", ti);
     if (ti >= 0 ) {
         time(&filesThread[ti].timeStart);
         filesThread[ti].running = TH_WAITING;
@@ -448,7 +450,7 @@ void callback_baby_crying()
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
         // Send image
-        printf("Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
+        fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
         sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
@@ -456,7 +458,7 @@ void callback_baby_crying()
 
         fImage = fopen(bufferFile, "r");
         if (fImage == NULL) {
-            printf("Cannot open image file\n");
+            fprintf(stderr, "Cannot open image file\n");
             remove(bufferFile);
             return;
         }
@@ -466,13 +468,13 @@ void callback_baby_crying()
 
         bufferImage = (char *) malloc(sz * sizeof(char));
         if (bufferImage == NULL) {
-            printf("Cannot allocate memory\n");
+            fprintf(stderr, "Cannot allocate memory\n");
             fclose(fImage);
             remove(bufferFile);
             return;
         }
         if (fread(bufferImage, 1, sz, fImage) != sz) {
-            printf("Cannot read image file\n");
+            fprintf(stderr, "Cannot read image file\n");
             free(bufferImage);
             fclose(fImage);
             remove(bufferFile);
@@ -494,12 +496,12 @@ void callback_baby_crying()
     }
 }
 
-void callback_sound_detection()
+void callback_sound_detection(void *arg)
 {
     char topic[128];
     mqtt_msg_t msg;
 
-    printf("CALLBACK SOUND DETECTION\n");
+    fprintf(stderr, "CALLBACK SOUND DETECTION\n");
 
     msg.msg=mqttv4_conf.sound_detection_msg;
     msg.len=strlen(msg.msg);
@@ -510,6 +512,34 @@ void callback_sound_detection()
     mqtt_send_message(&msg, conf.retain_sound_detection);
 }
 
+void callback_command(void *arg)
+{
+    char topic[128];
+    char *key, *value;
+    mqtt_msg_t msg;
+    IPC_COMMAND_TYPE *cmd_type = (IPC_COMMAND_TYPE *) arg;
+
+    fprintf(stderr, "CALLBACK COMMAND\n");
+
+    key = ipc_cmd_params[*cmd_type][0];
+    value = ipc_cmd_params[*cmd_type][1];
+
+    // Update .conf file
+    fprintf(stderr, "Updating file \"%s\", parameter \"%s\" with value \"%s\"\n", CAMERA_CONF_FILE, key, value);
+    if (config_replace(CAMERA_CONF_FILE, key, value) != 0) {
+        fprintf(stderr, "Error updating file \"%s\", parameter \"%s\" with value \"%s\"\n", CAMERA_CONF_FILE, key, value);
+    }
+
+    // Send start message
+    msg.msg=value;
+    msg.len=strlen(msg.msg);
+    msg.topic=topic;
+
+    sprintf(topic, "%s/camera/%s", mqttv4_conf.mqtt_prefix_stat, key);
+
+    mqtt_send_message(&msg, 1);
+}
+
 int main(int argc, char **argv)
 {
     int ret;
@@ -517,7 +547,7 @@ int main(int argc, char **argv)
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
 
-    printf("Starting mqttv4 v%s\n", MQTTV4_VERSION);
+    fprintf(stderr, "Starting mqttv4 v%s\n", MQTTV4_VERSION);
 
     // Init threads struct
     filesThread[0].running = TH_AVAILABLE;
@@ -553,6 +583,7 @@ int main(int argc, char **argv)
     ipc_set_callback(IPC_MSG_AI_ANIMAL_DETECTION, &callback_ai_animal_detection);
     ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
     ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
+    ipc_set_callback(IPC_MSG_COMMAND, &callback_command);
 
     while(1)
     {
@@ -658,6 +689,9 @@ static void handle_config(const char *key, const char *value)
         strcpy(conf.mqtt_prefix, value);
         mqttv4_conf.mqtt_prefix=malloc((char)strlen(value)+1);
         strcpy(mqttv4_conf.mqtt_prefix, value);
+
+        mqttv4_conf.mqtt_prefix_stat=malloc((char)strlen(value)+1+5);
+        sprintf(mqttv4_conf.mqtt_prefix_stat, "%s/stat", value);
     }
     else if(strcmp(key, "TOPIC_BIRTH_WILL")==0)
     {
@@ -741,7 +775,7 @@ static void handle_config(const char *key, const char *value)
     }
     else
     {
-        printf("key: %s | value: %s\n", key, value);
+        fprintf(stderr, "key: %s | value: %s\n", key, value);
         fprintf(stderr, "Unrecognized config line, ignore it\n");
     }
 }
@@ -768,7 +802,7 @@ static void init_mqttv4_config()
 
     if(init_config(MQTTV4_CONF_FILE)!=0)
     {
-        printf("Cannot open config file. Skipping.\n");
+        fprintf(stderr, "Cannot open config file. Skipping.\n");
         return;
     }
 
@@ -785,6 +819,8 @@ static void init_mqttv4_config()
     {
         mqttv4_conf.mqtt_prefix=malloc((char)strlen("yicam")+1);
         strcpy(mqttv4_conf.mqtt_prefix, "yicam");
+        mqttv4_conf.mqtt_prefix_stat=malloc((char)strlen("yicam/stat")+1);
+        strcpy(mqttv4_conf.mqtt_prefix_stat, "yicam/stat");
     }
     if(conf.topic_birth_will == NULL)
     {

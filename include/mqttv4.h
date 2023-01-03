@@ -15,7 +15,8 @@
 #include "files.h"
 
 #define MQTTV4_VERSION      "0.1.0"
-#define MQTTV4_CONF_FILE    "/home/yi-hack-v4/etc/mqttv4.conf"
+#define MQTTV4_CONF_FILE    "/home/yi-hack/etc/mqttv4.conf"
+#define CAMERA_CONF_FILE    "/home/yi-hack/etc/camera.conf"
 
 #define MQTTV4_SNAPSHOT     "export MOD=$(cat /home/yi-hack/model_suffix); /home/yi-hack/bin/imggrabber -m $MOD -r high -w"
 
@@ -26,6 +27,7 @@
 typedef struct
 {
     char *mqtt_prefix;
+    char *mqtt_prefix_stat;
     char *topic_birth_will;
     char *topic_motion;
     char *topic_motion_image;
