@@ -25,6 +25,7 @@ int files_delay = 70;        // Wait for xx seconds before search for mp4 files
 int files_max_events = 50;   // Number of files reported in the message
 
 extern char *ipc_cmd_params[][2];
+int dont_loop = 0;
 
 int get_thread_index(int state)
 {
@@ -439,7 +440,7 @@ void callback_baby_crying(void *arg)
         filesThread[ti].running = TH_WAITING;
     }
 
-    // Send start message
+    // Send message
     msg.msg=mqttv4_conf.baby_crying_msg;
     msg.len=strlen(msg.msg);
     msg.topic=topic;
@@ -518,6 +519,7 @@ void callback_command(void *arg)
     char *key, *value;
     mqtt_msg_t msg;
     IPC_COMMAND_TYPE *cmd_type = (IPC_COMMAND_TYPE *) arg;
+    int i;
 
     fprintf(stderr, "CALLBACK COMMAND\n");
 
@@ -530,7 +532,7 @@ void callback_command(void *arg)
         fprintf(stderr, "Error updating file \"%s\", parameter \"%s\" with value \"%s\"\n", CAMERA_CONF_FILE, key, value);
     }
 
-    // Send start message
+    // Send stat message
     msg.msg=value;
     msg.len=strlen(msg.msg);
     msg.topic=topic;
@@ -538,6 +540,29 @@ void callback_command(void *arg)
     sprintf(topic, "%s/camera/%s", mqttv4_conf.mqtt_prefix_stat, key);
 
     mqtt_send_message(&msg, 1);
+
+    if (dont_loop > 0) return;
+
+    if (strcasecmp("motion_detection", key) == 0) {
+        // Disable all AI detections
+        dont_loop = 1;
+        i = (int) IPC_CMD_AI_HUMAN_DETECTION_OFF;
+        callback_command(&i);
+        i = (int) IPC_CMD_AI_VEHICLE_DETECTION_OFF;
+        callback_command(&i);
+        i = (int) IPC_CMD_AI_ANIMAL_DETECTION_OFF;
+        callback_command(&i);
+        dont_loop = 0;
+    } else if ((strcasecmp("ai_human_detection", key) == 0) ||
+            (strcasecmp("ai_vehicle_detection", key) == 0) ||
+            (strcasecmp("ai_animal_detection", key) == 0)) {
+
+        // Disable motion detection
+        dont_loop = 1;
+        i = (int) IPC_CMD_AI_MOTION_DETECTION_OFF;
+        callback_command(&i);
+        dont_loop = 0;
+    }
 }
 
 int main(int argc, char **argv)
