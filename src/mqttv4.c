@@ -564,13 +564,15 @@ int main(int argc, char **argv)
     init_mqttv4_config();
     mqtt_set_conf(&conf);
 
-    ret=init_mqtt();
-    if(ret!=0)
-        exit(EXIT_FAILURE);
+    if (conf.enable == 1) {
+        ret=init_mqtt();
+        if(ret!=0)
+            exit(EXIT_FAILURE);
 
-    ret=mqtt_connect();
-    if(ret!=0)
-        exit(EXIT_FAILURE);
+        ret=mqtt_connect();
+        if(ret!=0)
+            exit(EXIT_FAILURE);
+    }
 
     ret=ipc_init();
     if(ret!=0)
@@ -587,14 +589,17 @@ int main(int argc, char **argv)
 
     while(1)
     {
-        mqtt_check_connection();
-        mqtt_loop();
+        if (conf.enable == 1) {
+            mqtt_check_connection();
+            mqtt_loop();
+        }
         usleep(500*1000);
     }
 
     ipc_stop();
-    stop_mqtt();
-    stop_config();
+    if (conf.enable == 1) {
+        stop_mqtt();
+    }
 
     return 0;
 }
@@ -609,7 +614,14 @@ static void handle_config(const char *key, const char *value)
 
     // If you think to have a better implementation.. PRs are welcome!
 
-    if(strcmp(key, "MQTT_IP")==0)
+    if(strcmp(key, "MQTT")==0)
+    {
+        if (strcasecmp("yes", value) == 0)
+            conf.enable = 1;
+        else
+            conf.enable = 0;
+    }
+    else if(strcmp(key, "MQTT_IP")==0)
     {
         strcpy(conf.host, value);
     }
@@ -800,6 +812,16 @@ static void init_mqttv4_config()
     mqttv4_conf.baby_crying_msg=NULL;
     mqttv4_conf.sound_detection_msg=NULL;
 
+    if(init_config(SYSTEM_CONF_FILE)!=0)
+    {
+        fprintf(stderr, "Cannot open config file. Skipping.\n");
+        return;
+    }
+
+    config_set_handler(&handle_config);
+    config_parse();
+    stop_config();
+
     if(init_config(MQTTV4_CONF_FILE)!=0)
     {
         fprintf(stderr, "Cannot open config file. Skipping.\n");
@@ -808,6 +830,7 @@ static void init_mqttv4_config()
 
     config_set_handler(&handle_config);
     config_parse();
+    stop_config();
 
     // Setting default for all char* vars
     if(conf.mqtt_prefix == NULL)

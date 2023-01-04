@@ -82,6 +82,7 @@ void mqtt_loop(void)
 
 void mqtt_init_conf(mqtt_conf_t *conf)
 {
+    conf->enable=0;
     strcpy(conf->client_id, "yi-cam");
 
     conf->user=NULL;

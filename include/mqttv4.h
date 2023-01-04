@@ -15,6 +15,7 @@
 #include "files.h"
 
 #define MQTTV4_VERSION      "0.1.0"
+#define SYSTEM_CONF_FILE    "/home/yi-hack/etc/system.conf"
 #define MQTTV4_CONF_FILE    "/home/yi-hack/etc/mqttv4.conf"
 #define CAMERA_CONF_FILE    "/home/yi-hack/etc/camera.conf"
 
