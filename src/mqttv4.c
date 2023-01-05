@@ -543,7 +543,7 @@ void callback_command(void *arg)
 
     if (dont_loop > 0) return;
 
-    if (strcasecmp("motion_detection", key) == 0) {
+    if ((strcasecmp("motion_detection", key) == 0) && (strcasecmp("yes", value) == 0)) {
         // Disable all AI detections
         dont_loop = 1;
         i = (int) IPC_CMD_AI_HUMAN_DETECTION_OFF;
@@ -553,9 +553,10 @@ void callback_command(void *arg)
         i = (int) IPC_CMD_AI_ANIMAL_DETECTION_OFF;
         callback_command(&i);
         dont_loop = 0;
-    } else if ((strcasecmp("ai_human_detection", key) == 0) ||
+    } else if (((strcasecmp("ai_human_detection", key) == 0) ||
             (strcasecmp("ai_vehicle_detection", key) == 0) ||
-            (strcasecmp("ai_animal_detection", key) == 0)) {
+            (strcasecmp("ai_animal_detection", key) == 0)) &&
+            (strcasecmp("yes", value) == 0)) {
 
         // Disable motion detection
         dont_loop = 1;
