@@ -27,6 +27,8 @@ int files_max_events = 50;   // Number of files reported in the message
 extern char *ipc_cmd_params[][2];
 int dont_loop = 0;
 
+int gmt;
+
 int get_thread_index(int state)
 {
     int i;
@@ -53,7 +55,7 @@ void *send_files_list(void *arg)
     fprintf(stderr, "SENDING FILES LIST\n");
 
     memset(ft->output, '\0', sizeof(ft->output));
-    if (getMp4Files(ft->output, files_max_events, ft->timeStart, ft->timeStop) == 0) {
+    if (getMp4Files(ft->output, gmt, files_max_events, ft->timeStart, ft->timeStop) == 0) {
         msg.msg=ft->output;
         msg.len=strlen(msg.msg);
         msg.topic=topic;
@@ -569,6 +571,27 @@ void callback_command(void *arg)
 int main(int argc, char **argv)
 {
     int ret;
+
+    if (argc == 1) {
+        gmt = 1;
+    } else if (argc == 3) {
+        if ((strcmp("-t", argv[1]) == 0) || (strcmp("--time", argv[1]) == 0)) {
+            if (strcmp("gmt", argv[2]) == 0) {
+                gmt = 1;
+            } else if (strcmp("local", argv[2]) == 0) {
+                gmt = 0;
+            } else {
+                printf("Wrong arguments\n");
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            printf("Wrong arguments\n");
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        printf("Wrong arguments\n");
+        exit(EXIT_FAILURE);
+    }
 
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);

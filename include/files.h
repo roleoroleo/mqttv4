@@ -20,6 +20,6 @@ typedef struct {
     int running;
 } files_thread;
 
-int getMp4Files(char *output, int limit, time_t startTime, time_t endTime);
+int getMp4Files(char *output, int gmt, int limit, time_t startTime, time_t endTime);
 
 #endif // FILES_H
