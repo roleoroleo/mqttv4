@@ -242,7 +242,7 @@ static int parse_message(char *msg, ssize_t len)
         handle_ipc_motion_start();
         return 0;
     }
-    if((len >= sizeof(IPC_MOTION_START_C) - 1) && (memcmp(msg, IPC_MOTION_START_C, sizeof(IPC_MOTION_START_C) - 1)==0))
+    else if((len >= sizeof(IPC_MOTION_START_C) - 1) && (memcmp(msg, IPC_MOTION_START_C, sizeof(IPC_MOTION_START_C) - 1)==0))
     {
         handle_ipc_motion_start();
         return 0;
