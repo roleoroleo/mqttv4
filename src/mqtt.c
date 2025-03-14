@@ -23,7 +23,7 @@ void send_birth_msg()
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
+    snprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
 
     mqtt_send_message(&msg, mqtt_conf->retain_birth_will);
 }
@@ -37,7 +37,7 @@ void send_will_msg()
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
+    snprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
 
     mqtt_send_message(&msg, mqtt_conf->retain_birth_will);
 }
@@ -116,7 +116,7 @@ void mqtt_check_connection()
     char topic[128];
 
     if (conn_state != CONN_CONNECTED) {
-        sprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
+        snprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
         mosquitto_will_set(mosq, topic, strlen(mqtt_conf->will_msg),
                     mqtt_conf->will_msg, mqtt_conf->qos, mqtt_conf->retain_birth_will == 1);
         mqtt_connect();
@@ -145,7 +145,7 @@ int mqtt_connect()
 
 
     while (conn_state!=CONN_CONNECTED) {
-        sprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
+        snprintf(topic, sizeof(topic), "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
         mosquitto_will_set(mosq, topic, strlen(mqtt_conf->will_msg),
                     mqtt_conf->will_msg, mqtt_conf->qos, mqtt_conf->retain_birth_will == 1);
 
