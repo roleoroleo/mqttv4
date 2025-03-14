@@ -60,7 +60,7 @@ void *send_files_list(void *arg)
         msg.len=strlen(msg.msg);
         msg.topic=topic;
 
-        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_files);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_files);
 
         mqtt_send_message(&msg, conf.retain_motion_files);
     }
@@ -97,7 +97,7 @@ void callback_motion_start(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
 
@@ -105,7 +105,7 @@ void callback_motion_start(void *arg)
         // Send image
         fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
-        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        snprintf(cmd, sizeof(cmd), "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
         system(cmd);
 
@@ -138,7 +138,7 @@ void callback_motion_start(void *arg)
         msg.len=sz;
         msg.topic=topic;
 
-        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
 
         mqtt_send_message(&msg, conf.retain_motion_image);
 
@@ -164,7 +164,7 @@ void callback_motion_stop(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
 
@@ -216,7 +216,7 @@ void callback_ai_human_detection(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
 
@@ -224,7 +224,7 @@ void callback_ai_human_detection(void *arg)
         // Send image
         fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
-        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        snprintf(cmd, sizeof(cmd), "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
         system(cmd);
 
@@ -257,7 +257,7 @@ void callback_ai_human_detection(void *arg)
         msg.len=sz;
         msg.topic=topic;
 
-        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
 
         mqtt_send_message(&msg, conf.retain_motion_image);
 
@@ -293,7 +293,7 @@ void callback_ai_vehicle_detection(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
 
@@ -301,7 +301,7 @@ void callback_ai_vehicle_detection(void *arg)
         // Send image
         fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
-        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        snprintf(cmd, sizeof(cmd), "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
         system(cmd);
 
@@ -334,7 +334,7 @@ void callback_ai_vehicle_detection(void *arg)
         msg.len=sz;
         msg.topic=topic;
 
-        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
 
         mqtt_send_message(&msg, conf.retain_motion_image);
 
@@ -370,7 +370,7 @@ void callback_ai_animal_detection(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
 
@@ -378,7 +378,7 @@ void callback_ai_animal_detection(void *arg)
         // Send image
         fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
-        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        snprintf(cmd, sizeof(cmd), "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
         system(cmd);
 
@@ -411,7 +411,7 @@ void callback_ai_animal_detection(void *arg)
         msg.len=sz;
         msg.topic=topic;
 
-        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
 
         mqtt_send_message(&msg, conf.retain_motion_image);
 
@@ -447,7 +447,7 @@ void callback_baby_crying(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion);
 
     mqtt_send_message(&msg, conf.retain_motion);
 
@@ -455,7 +455,7 @@ void callback_baby_crying(void *arg)
         // Send image
         fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
-        sprintf(cmd, "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
+        snprintf(cmd, sizeof(cmd), "%s > %s", MQTTV4_SNAPSHOT, bufferFile);
         usleep((unsigned int) (mqttv4_conf.motion_image_delay * 1000.0 * 1000.0));
         system(cmd);
 
@@ -488,7 +488,7 @@ void callback_baby_crying(void *arg)
         msg.len=sz;
         msg.topic=topic;
 
-        sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_motion_image);
 
         mqtt_send_message(&msg, conf.retain_motion_image);
 
@@ -510,7 +510,7 @@ void callback_sound_detection(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_sound_detection);
+    snprintf(topic, sizeof(topic), "%s/%s", mqttv4_conf.mqtt_prefix, mqttv4_conf.topic_sound_detection);
 
     mqtt_send_message(&msg, conf.retain_sound_detection);
 }
@@ -539,7 +539,7 @@ void callback_command(void *arg)
     msg.len=strlen(msg.msg);
     msg.topic=topic;
 
-    sprintf(topic, "%s/camera/%s", mqttv4_conf.mqtt_prefix_stat, key);
+    snprintf(topic, sizeof(topic), "%s/camera/%s", mqttv4_conf.mqtt_prefix_stat, key);
 
     mqtt_send_message(&msg, 1);
 

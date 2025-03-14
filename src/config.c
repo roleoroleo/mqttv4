@@ -159,7 +159,7 @@ int config_replace(char *filename, char *key, char *value)
         if (buf[0] != '#') {
             parsed = sscanf(buf, "%[^=] = %s", oldkey, oldvalue);
             if((parsed == 2) && (strcasecmp(ukey, oldkey) == 0)) {
-                sprintf(buf, "%s=%s\n", ukey, value);
+                snprintf(buf, sizeof(buf), "%s=%s\n", ukey, value);
                 ret = 0;
             }
         }
