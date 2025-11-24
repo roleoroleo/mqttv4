@@ -1,3 +1,4 @@
+#ifdef USE_MOSQUITTO
 #include "mqtt.h"
 
 static struct mosquitto *mosq = NULL;
@@ -286,3 +287,4 @@ static void log_callback(struct mosquitto *mosq, void *obj, int level, const cha
 {
     fprintf(stderr, "%s\n", str);
 }
+#endif //USE_MOSQUITTO

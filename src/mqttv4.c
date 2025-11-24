@@ -568,6 +568,14 @@ void callback_command(void *arg)
     }
 }
 
+/*
+ * pipe signal handler
+ */
+void handle_pipe_signal(int s)
+{
+    fprintf(stderr, "Pipe Signal Handler\n");
+}
+
 int main(int argc, char **argv)
 {
     int ret;
@@ -597,6 +605,8 @@ int main(int argc, char **argv)
     setbuf(stderr, NULL);
 
     fprintf(stderr, "Starting mqttv4 v%s\n", MQTTV4_VERSION);
+
+    signal(SIGPIPE, handle_pipe_signal);
 
     // Init threads struct
     filesThread[0].running = TH_AVAILABLE;
@@ -694,6 +704,16 @@ static void handle_config(const char *key, const char *value)
         nvalue=strtol(value, NULL, 10);
         if(errno==0)
             conf.port=nvalue;
+    }
+    else if(strcmp(key, "MQTT_TLS")==0)
+    {
+        errno=0;
+        nvalue=strtol(value, NULL, 10);
+        if(errno==0)
+            conf.tls=nvalue;
+#ifdef USE_MOSQUITTO
+        conf.tls = 0;
+#endif
     }
     else if(strcmp(key, "MQTT_KEEPALIVE")==0)
     {

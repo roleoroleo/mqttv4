@@ -2,12 +2,31 @@
 #define MQTT_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#ifdef USE_MOSQUITTO
 #include <mosquitto.h>
+#else
+#include <wolfmqtt/mqtt_client.h>
+#include <wolfmqtt/mqtt_packet.h>
+#include <wolfmqtt/mqtt_socket.h>
+#include <wolfmqtt/mqtt_types.h>
+#endif
+
+#include <mqttv4.h>
 
 #define EMPTY_TOPIC         "EMPTY_TOPIC"
+#define MQTT_MAX_PACKET_SZ  2048
+#define MQTT_PING_INTERVAL  30
+#define RECONNECT_DELAY     3000
+#define DEFAULT_CON_TIMEOUT 5000
+#define DEFAULT_CMD_TIMEOUT 30000
 
 typedef struct
 {
@@ -17,6 +36,7 @@ typedef struct
     char       *password;
     char        host[128];
     int         port;
+    int         tls;
     int         keepalive;
     char        bind_address[32];
     int         qos;

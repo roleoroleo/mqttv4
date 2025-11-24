@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
 #include "config.h"
 #include "ipc.h"
@@ -18,6 +19,9 @@
 #define SYSTEM_CONF_FILE    "/home/yi-hack/etc/system.conf"
 #define MQTTV4_CONF_FILE    "/home/yi-hack/etc/mqttv4.conf"
 #define CAMERA_CONF_FILE    "/home/yi-hack/etc/camera.conf"
+#define CA_CERT             "/home/yi-hack/etc/mqtt/ca.crt"
+#define CLIENT_CERT         "/home/yi-hack/etc/mqtt/client.crt"
+#define CLIENT_KEY          "/home/yi-hack/etc/mqtt/client.key"
 
 #define MQTTV4_SNAPSHOT     "export MOD=$(cat /home/yi-hack/model_suffix); /home/yi-hack/bin/imggrabber -m $MOD -r high -w"
 
