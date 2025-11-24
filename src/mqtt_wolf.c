@@ -270,14 +270,15 @@ int mqtt_connect()
     }
 
     /* Prepare CONNECT packet */
-    MqttConnect wolf_connect = {0};
+    MqttConnect wolf_connect;
     memset(&wolf_connect, '\0', sizeof(wolf_connect));
-    MqttMessage lwt_msg = {0};
+    MqttMessage lwt_msg;
     memset(&lwt_msg, '\0', sizeof(lwt_msg));
     wolf_connect.client_id = mqtt_conf->client_id;
     wolf_connect.keep_alive_sec = mqtt_conf->keepalive;
     wolf_connect.clean_session = 1;
     wolf_connect.lwt_msg = &lwt_msg;
+    wolf_connect.enable_lwt = 1;
 
     /* Will */
     lwt_msg.qos        = mqtt_conf->qos;
@@ -285,8 +286,8 @@ int mqtt_connect()
     memset(topic, '\0', sizeof(topic));
     snprintf(topic, sizeof(topic) - 1, "%s/%s", mqtt_conf->mqtt_prefix, mqtt_conf->topic_birth_will);
     lwt_msg.topic_name = (const char *) topic;
-    lwt_msg.buffer = (unsigned char *) mqtt_conf->birth_msg;
-    lwt_msg.total_len  = strlen(mqtt_conf->birth_msg);
+    lwt_msg.buffer = (unsigned char *) mqtt_conf->will_msg;
+    lwt_msg.total_len  = strlen(mqtt_conf->will_msg);
 
     if (mqtt_conf->user != NULL && strcmp(mqtt_conf->user, "") != 0) {
         wolf_connect.username = mqtt_conf->user;
@@ -317,6 +318,8 @@ int mqtt_connect()
     } while(rc != MQTT_CODE_SUCCESS);
 
     conn_state = CONN_CONNECTED;
+
+    send_birth_msg();
 
     fprintf(stderr, "Connected!\n");
 
