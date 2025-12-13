@@ -181,7 +181,7 @@ void mqtt_loop(void) {
 
     rc = MqttClient_WaitMessage(&wolf_client, 1000);
 
-    if (rc == MQTT_CODE_ERROR_TIMEOUT) {
+    if ((rc == MQTT_CODE_ERROR_TIMEOUT) || (rc == MQTT_CODE_CONTINUE)) {
         // no messages, normal
     } else if (rc != MQTT_CODE_SUCCESS) {
         conn_state = CONN_DISCONNECTED;
@@ -347,7 +347,7 @@ int mqtt_send_message(mqtt_msg_t *msg, int retain)
         wolf_publish.topic_name = msg->topic;
         wolf_publish.packet_id = mqtt_get_packetid();
         wolf_publish.buffer = (unsigned char*) msg->msg;
-        wolf_publish.total_len = (word16) strlen(msg->msg);
+        wolf_publish.total_len = msg->len;
         rc = MqttClient_Publish(&wolf_client, &wolf_publish);
     }
 
