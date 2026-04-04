@@ -18,6 +18,8 @@ static int mqtt_tls_cb(MqttClient* client);
 static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
                            byte msg_new, byte msg_done);
 
+int ping_timeout = 0;
+
 /*******************************************************************************
 *
 * WolfMqtt functions
@@ -177,9 +179,10 @@ void stop_mqtt(void)
 
 void mqtt_loop(void) {
     int rc;
-    int counter = 0;
+//    int counter = 0;
+    int read_timeout = 1000;
 
-    rc = MqttClient_WaitMessage(&wolf_client, 1000);
+    rc = MqttClient_WaitMessage(&wolf_client, read_timeout);
 
     if ((rc == MQTT_CODE_ERROR_TIMEOUT) || (rc == MQTT_CODE_CONTINUE)) {
         // no messages, normal
@@ -197,10 +200,11 @@ void mqtt_loop(void) {
         }
     }
 
+    ping_timeout += read_timeout;
+
     // Periodic ping
-    counter++;
-    if (counter >= MQTT_PING_INTERVAL) {
-        counter = 0;
+    if ((ping_timeout / 1000 >= MQTT_PING_INTERVAL) || (ping_timeout / 1000 >= mqtt_conf->keepalive / 2)) {
+        ping_timeout = 0;
         fprintf(stderr, "Ping the broker...\n");
         rc = MqttClient_Ping(&wolf_client);
         if (rc != MQTT_CODE_SUCCESS) {
