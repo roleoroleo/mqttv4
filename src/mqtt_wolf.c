@@ -97,7 +97,33 @@ static int net_read(void *context, byte *buf, int buf_len, int timeout_ms)
         if (e == EAGAIN) {
             r = MQTT_CODE_ERROR_TIMEOUT;
         } else {
-            fprintf(stderr, "Error in recv %d (%d)\n", r, e);
+            // 2nd try
+            if (e == EINTR) {
+                r = recv(ctx->sockfd, buf, buf_len, 0);
+                e = errno;
+                if (r < 0) {
+                    if (e == EAGAIN) {
+                        r = MQTT_CODE_ERROR_TIMEOUT;
+                    } else {
+                        // 3rd try
+                        if (e == EINTR) {
+                            r = recv(ctx->sockfd, buf, buf_len, 0);
+                            e = errno;
+                            if (r < 0) {
+                                if (e == EAGAIN) {
+                                    r = MQTT_CODE_ERROR_TIMEOUT;
+                                } else {
+                                    fprintf(stderr, "Error in recv %d (%d)\n", r, e);
+                                }
+                            }
+                        } else {
+                            fprintf(stderr, "Error in recv %d (%d)\n", r, e);
+                        }
+                    }
+                }
+            } else {
+                fprintf(stderr, "Error in recv %d (%d)\n", r, e);
+            }
         }
     }
     setsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_old, sizeof(tv_old));
@@ -205,19 +231,26 @@ void mqtt_loop(void) {
     // Periodic ping
     if ((ping_timeout / 1000 >= MQTT_PING_INTERVAL) || (ping_timeout / 1000 >= mqtt_conf->keepalive / 2)) {
         ping_timeout = 0;
-        fprintf(stderr, "Ping the broker...\n");
-        rc = MqttClient_Ping(&wolf_client);
-        if (rc != MQTT_CODE_SUCCESS) {
-            fprintf(stderr, "Ping failed rc=%d, reconnect...\n", rc);
+        mqtt_ping();
+    }
+}
 
-            // try to reconnect
-            usleep(RECONNECT_DELAY * 1000);
-            MqttClient_Disconnect(&wolf_client);
-            MqttClient_NetDisconnect(&wolf_client);
-            if (mqtt_connect() != MQTT_CODE_SUCCESS) {
-                fprintf(stderr, "Retry...\n");
-                return;
-            }
+void mqtt_ping(void)
+{
+    int rc;
+
+    fprintf(stderr, "Ping the broker...\n");
+    rc = MqttClient_Ping(&wolf_client);
+    if (rc != MQTT_CODE_SUCCESS) {
+        fprintf(stderr, "Ping failed rc=%d, reconnect...\n", rc);
+
+        // try to reconnect
+        usleep(RECONNECT_DELAY * 1000);
+        MqttClient_Disconnect(&wolf_client);
+        MqttClient_NetDisconnect(&wolf_client);
+        if (mqtt_connect() != MQTT_CODE_SUCCESS) {
+            fprintf(stderr, "Retry...\n");
+            return;
         }
     }
 }
