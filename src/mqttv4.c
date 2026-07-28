@@ -13,6 +13,8 @@
  * Crypto
  */
 
+volatile sig_atomic_t run = 1;
+
 mqtt_conf_t conf;
 mqttv4_conf_t mqttv4_conf;
 
@@ -572,6 +574,15 @@ void callback_command(void *arg)
 }
 
 /*
+ * int/term signal handler
+ */
+static void handle_term(int sig)
+{
+    (void) sig;
+    run = 0;
+}
+
+/*
  * pipe signal handler
  */
 void handle_pipe_signal(int s)
@@ -609,6 +620,8 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "Starting mqttv4 v%s\n", MQTTV4_VERSION);
 
+    signal(SIGINT,  handle_term);
+    signal(SIGTERM, handle_term);
     signal(SIGPIPE, handle_pipe_signal);
 
     // Init threads struct
@@ -649,7 +662,7 @@ int main(int argc, char **argv)
     ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
     ipc_set_callback(IPC_MSG_COMMAND, &callback_command);
 
-    while(1)
+    while(run)
     {
         if (conf.enable == 1) {
             mqtt_check_connection();

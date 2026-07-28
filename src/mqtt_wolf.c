@@ -1,5 +1,8 @@
 #ifndef USE_MOSQUITTO
 #include "mqtt.h"
+#include <pthread.h>
+
+extern volatile sig_atomic_t run;
 
 static MqttNet wolf_net;
 static MqttClient wolf_client;
@@ -335,6 +338,10 @@ int mqtt_connect()
 
     do
     {
+        if (!run) {
+            return -1;
+        }
+
         /* Connect to broker with TLS */
         rc = MqttClient_NetConnect(&wolf_client, mqtt_conf->host, mqtt_conf->port,
             DEFAULT_CON_TIMEOUT, mqtt_conf->tls, mqtt_conf->tls==1? mqtt_tls_cb : NULL);
