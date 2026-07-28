@@ -21,7 +21,9 @@ static int mqtt_tls_cb(MqttClient* client);
 static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
                            byte msg_new, byte msg_done);
 
-int ping_timeout = 0;
+static time_t last_ping = 0;
+
+static pthread_mutex_t wolf_mtx;
 
 /*******************************************************************************
 *
@@ -86,11 +88,12 @@ static int net_write(void *context, const byte *buf, int buf_len, int timeout_ms
 
 static int net_read(void *context, byte *buf, int buf_len, int timeout_ms)
 {
-    (void)timeout_ms;
     struct net_ctx *ctx = (struct net_ctx *) context;
     struct timeval tv_old, tv_new;
-    socklen_t tv_old_size;
-    getsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_old, &tv_old_size);
+    socklen_t tv_old_size = sizeof(tv_old);
+    int have_old = 0;
+    if (getsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_old, &tv_old_size) == 0)
+        have_old = 1;
     tv_new.tv_sec = timeout_ms / 1000;
     tv_new.tv_usec = (timeout_ms % 1000) * 1000;
     setsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_new, sizeof(tv_new));
@@ -129,7 +132,8 @@ static int net_read(void *context, byte *buf, int buf_len, int timeout_ms)
             }
         }
     }
-    setsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_old, sizeof(tv_old));
+    if (have_old)
+        setsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_old, sizeof(tv_old));
 
     return r;
 }
@@ -185,6 +189,12 @@ int init_mqtt(void)
 {
     int rc;
 
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&wolf_mtx, &attr);
+    pthread_mutexattr_destroy(&attr);
+
     rc = init_wolf_instance();
     if(rc != 0)
     {
@@ -199,41 +209,39 @@ int init_mqtt(void)
 
 void stop_mqtt(void)
 {
+    pthread_mutex_lock(&wolf_mtx);
+
     send_will_msg();
 
     MqttClient_Disconnect(&wolf_client);
     MqttClient_NetDisconnect(&wolf_client);
     MqttClient_DeInit(&wolf_client);
+    conn_state = CONN_DISCONNECTED;
+
+    pthread_mutex_unlock(&wolf_mtx);
 }
 
 void mqtt_loop(void) {
     int rc;
-//    int counter = 0;
-    int read_timeout = 1000;
+    int read_timeout = 250;
 
+    pthread_mutex_lock(&wolf_mtx);
     rc = MqttClient_WaitMessage(&wolf_client, read_timeout);
 
     if ((rc == MQTT_CODE_ERROR_TIMEOUT) || (rc == MQTT_CODE_CONTINUE)) {
         // no messages, normal
     } else if (rc != MQTT_CODE_SUCCESS) {
+        fprintf(stderr, "Connection lost (rc=%d).\n", rc);
         conn_state = CONN_DISCONNECTED;
-        fprintf(stderr, "Connection lost (rc=%d). Reconnect...\n", rc);
-
-        // try to reconnect
-        usleep(RECONNECT_DELAY * 1000);
-        MqttClient_Disconnect(&wolf_client);
-        MqttClient_NetDisconnect(&wolf_client);
-        if (mqtt_connect() != MQTT_CODE_SUCCESS) {
-            fprintf(stderr, "Retry...\n");
-            return;
-        }
     }
-
-    ping_timeout += read_timeout;
+    pthread_mutex_unlock(&wolf_mtx);
 
     // Periodic ping
-    if ((ping_timeout / 1000 >= MQTT_PING_INTERVAL) || (ping_timeout / 1000 >= mqtt_conf->keepalive / 2)) {
-        ping_timeout = 0;
+    int ping_interval = mqtt_conf->keepalive / 2;
+    if (ping_interval > MQTT_PING_INTERVAL) ping_interval = MQTT_PING_INTERVAL;
+    if (ping_interval < 1) ping_interval = 1;
+
+    if ((conn_state == CONN_CONNECTED) && (time(NULL) - last_ping >= ping_interval)) {
         mqtt_ping();
     }
 }
@@ -242,20 +250,16 @@ void mqtt_ping(void)
 {
     int rc;
 
+    last_ping = time(NULL);
+
+    pthread_mutex_lock(&wolf_mtx);
     fprintf(stderr, "Ping the broker...\n");
     rc = MqttClient_Ping(&wolf_client);
     if (rc != MQTT_CODE_SUCCESS) {
         fprintf(stderr, "Ping failed rc=%d, reconnect...\n", rc);
-
-        // try to reconnect
-        usleep(RECONNECT_DELAY * 1000);
-        MqttClient_Disconnect(&wolf_client);
-        MqttClient_NetDisconnect(&wolf_client);
-        if (mqtt_connect() != MQTT_CODE_SUCCESS) {
-            fprintf(stderr, "Retry...\n");
-            return;
-        }
+        conn_state = CONN_DISCONNECTED;
     }
+    pthread_mutex_unlock(&wolf_mtx);
 }
 
 //-----------------------------------------------------------------------------
@@ -294,7 +298,15 @@ void mqtt_set_conf(mqtt_conf_t *conf)
 
 void mqtt_check_connection()
 {
+    if (conn_state == CONN_CONNECTED) return;
 
+    pthread_mutex_lock(&wolf_mtx);
+    fprintf(stderr, "Connection down, reconnecting...\n");
+    MqttClient_Disconnect(&wolf_client);
+    MqttClient_NetDisconnect(&wolf_client);
+    usleep(RECONNECT_DELAY * 1000);
+    mqtt_connect();
+    pthread_mutex_unlock(&wolf_mtx);
 }
 
 int mqtt_connect()
@@ -334,11 +346,13 @@ int mqtt_connect()
         wolf_connect.password = mqtt_conf->password;
     }
 
+    pthread_mutex_lock(&wolf_mtx);
     conn_state = CONN_DISCONNECTED;
 
     do
     {
         if (!run) {
+            pthread_mutex_unlock(&wolf_mtx);
             return -1;
         }
 
@@ -362,10 +376,11 @@ int mqtt_connect()
     } while(rc != MQTT_CODE_SUCCESS);
 
     conn_state = CONN_CONNECTED;
-
+    last_ping = time(NULL);
     send_birth_msg();
 
     fprintf(stderr, "Connected!\n");
+    pthread_mutex_unlock(&wolf_mtx);
 
     return 0;
 }
@@ -382,22 +397,25 @@ int mqtt_send_message(mqtt_msg_t *msg, int retain)
                 (strcmp(EMPTY_TOPIC, &msg->topic[strlen(msg->topic) - strlen(EMPTY_TOPIC)]) == 0)) {
         fprintf(stderr, "No message sent: topic is empty\n");
         return -1;
-    } else {
-        /* Publish Topic */
-        memset(&wolf_publish, '\0', sizeof(wolf_publish));
-        wolf_publish.retain = retain;
-        wolf_publish.qos = mqtt_conf->qos;
-        wolf_publish.duplicate = 0;
-        wolf_publish.topic_name = msg->topic;
-        wolf_publish.packet_id = mqtt_get_packetid();
-        wolf_publish.buffer = (unsigned char*) msg->msg;
-        wolf_publish.total_len = msg->len;
-        rc = MqttClient_Publish(&wolf_client, &wolf_publish);
     }
+
+    /* Publish Topic */
+    memset(&wolf_publish, '\0', sizeof(wolf_publish));
+    wolf_publish.retain = retain;
+    wolf_publish.qos = mqtt_conf->qos;
+    wolf_publish.duplicate = 0;
+    wolf_publish.topic_name = msg->topic;
+    wolf_publish.buffer = (unsigned char*) msg->msg;
+    wolf_publish.total_len = msg->len;
+    pthread_mutex_lock(&wolf_mtx);
+    wolf_publish.packet_id = mqtt_get_packetid();
+    rc = MqttClient_Publish(&wolf_client, &wolf_publish);
 
     if ((rc != MQTT_CODE_SUCCESS) && (rc != MQTT_CODE_CONTINUE)) {
         fprintf(stderr, "MQTT Publish error: %s (%d)\n", MqttClient_ReturnCodeToString(rc), rc);
+        conn_state = CONN_DISCONNECTED;
     }
+    pthread_mutex_unlock(&wolf_mtx);
 
     return rc;
 }

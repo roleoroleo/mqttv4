@@ -104,9 +104,6 @@ void callback_motion_start(void *arg)
     mqtt_send_message(&msg, conf.retain_motion);
 
     if (strcmp(EMPTY_TOPIC, mqttv4_conf.topic_motion_image) != 0) {
-        // Ping the broker before snapshot
-        fprintf(stderr, "Ping the broker before snapshot\n");
-        mqtt_ping();
         // Send image
         fprintf(stderr, "Wait %.1f seconds and take a snapshot\n", mqttv4_conf.motion_image_delay);
         tmpnam(bufferFile);
