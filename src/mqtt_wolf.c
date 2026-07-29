@@ -92,44 +92,22 @@ static int net_read(void *context, byte *buf, int buf_len, int timeout_ms)
     struct timeval tv_old, tv_new;
     socklen_t tv_old_size = sizeof(tv_old);
     int have_old = 0;
+    int r, e;
     if (getsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_old, &tv_old_size) == 0)
         have_old = 1;
     tv_new.tv_sec = timeout_ms / 1000;
     tv_new.tv_usec = (timeout_ms % 1000) * 1000;
     setsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &tv_new, sizeof(tv_new));
-    int r = recv(ctx->sockfd, buf, buf_len, 0);
-    int e = errno;
+
+    do {
+        r = recv(ctx->sockfd, buf, buf_len, 0);
+        e = errno;
+    } while ((r < 0) && (e == EINTR));
     if (r < 0) {
-        if (e == EAGAIN) {
+        if ((e == EAGAIN) || (e == EWOULDBLOCK)) {
             r = MQTT_CODE_ERROR_TIMEOUT;
         } else {
-            // 2nd try
-            if (e == EINTR) {
-                r = recv(ctx->sockfd, buf, buf_len, 0);
-                e = errno;
-                if (r < 0) {
-                    if (e == EAGAIN) {
-                        r = MQTT_CODE_ERROR_TIMEOUT;
-                    } else {
-                        // 3rd try
-                        if (e == EINTR) {
-                            r = recv(ctx->sockfd, buf, buf_len, 0);
-                            e = errno;
-                            if (r < 0) {
-                                if (e == EAGAIN) {
-                                    r = MQTT_CODE_ERROR_TIMEOUT;
-                                } else {
-                                    fprintf(stderr, "Error in recv %d (%d)\n", r, e);
-                                }
-                            }
-                        } else {
-                            fprintf(stderr, "Error in recv %d (%d)\n", r, e);
-                        }
-                    }
-                }
-            } else {
-                fprintf(stderr, "Error in recv %d (%d)\n", r, e);
-            }
+            fprintf(stderr, "Error in recv %d (%d)\n", r, e);
         }
     }
     if (have_old)
