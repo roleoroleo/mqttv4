@@ -348,6 +348,13 @@ int mqtt_connect()
         if (rc != MQTT_CODE_SUCCESS) {
             fprintf(stderr, "MQTT connect error: %s (%d)\n",
                 MqttClient_ReturnCodeToString(rc), rc);
+            /* Drop the socket before retrying. wolfMQTT keeps the client
+             * flagged as connected until NetDisconnect, so the next
+             * NetConnect would be a no-op and every retry would reuse a
+             * socket the broker has already closed (or resend CONNECT on
+             * a live one, which the broker rejects as a protocol error). */
+            MqttClient_NetDisconnect(&wolf_client);
+            wolf_connect.stat.write = MQTT_MSG_BEGIN;
             usleep(500*1000);
             continue;
         }
