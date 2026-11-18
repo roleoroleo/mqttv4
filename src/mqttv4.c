@@ -650,13 +650,15 @@ int main(int argc, char **argv)
     if(ret!=0)
         exit(EXIT_FAILURE);
 
-    ipc_set_callback(IPC_MSG_MOTION_START, &callback_motion_start);
-    ipc_set_callback(IPC_MSG_MOTION_STOP, &callback_motion_stop);
-    ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION, &callback_ai_human_detection);
-    ipc_set_callback(IPC_MSG_AI_VEHICLE_DETECTION, &callback_ai_vehicle_detection);
-    ipc_set_callback(IPC_MSG_AI_ANIMAL_DETECTION, &callback_ai_animal_detection);
-    ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
-    ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
+    if (conf.enable == 1) {
+        ipc_set_callback(IPC_MSG_MOTION_START, &callback_motion_start);
+        ipc_set_callback(IPC_MSG_MOTION_STOP, &callback_motion_stop);
+        ipc_set_callback(IPC_MSG_AI_HUMAN_DETECTION, &callback_ai_human_detection);
+        ipc_set_callback(IPC_MSG_AI_VEHICLE_DETECTION, &callback_ai_vehicle_detection);
+        ipc_set_callback(IPC_MSG_AI_ANIMAL_DETECTION, &callback_ai_animal_detection);
+        ipc_set_callback(IPC_MSG_BABY_CRYING, &callback_baby_crying);
+        ipc_set_callback(IPC_MSG_SOUND_DETECTION, &callback_sound_detection);
+    }
     ipc_set_callback(IPC_MSG_COMMAND, &callback_command);
 
     while(run)
