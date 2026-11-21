@@ -122,7 +122,7 @@ int ipc_init()
     if(ret != 0)
         return -2;
 
-    ipc_callbacks=calloc((sizeof(func_ptr_t))*IPC_MSG_LAST);
+    ipc_callbacks=calloc(IPC_MSG_LAST, sizeof(func_ptr_t));
 
     ret=start_queue_thread();
     if(ret!=0)
